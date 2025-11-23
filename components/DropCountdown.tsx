@@ -1,27 +1,40 @@
+// components/DropHeaderCountdown.tsx
 "use client";
 
-import { useCountdown } from "@/app/hooks/useCountdown";
+import { useEffect, useState } from "react";
 import { UpcomingReminder } from "@/components/UpcomingReminder";
 
 type DropMode = "live" | "upcoming" | "expired";
 
 type Props = {
   mode: DropMode;
-  startsAt: string | null; // ISO timestamp
+  startsAt: string | null; // ISO-timestamp
   itemId: string;
 };
 
 export function DropHeaderCountdown({ mode, startsAt, itemId }: Props) {
-  // Kun upcoming bruger countdown
-  if (mode !== "upcoming" || !startsAt) return null;
+  const [remainingMs, setRemainingMs] = useState<number | null>(null);
 
-  const timeLeft = useCountdown(startsAt); // returnerer "MM:SS" eller "00:00"
+  useEffect(() => {
+    if (mode !== "upcoming" || !startsAt) return;
 
-  // Hvis hook returnerer null → endnu ikke loadet første tick
-  if (timeLeft === null) return null;
+    const target = new Date(startsAt).getTime();
+    if (Number.isNaN(target)) return;
 
-  // Når tiden rammer, viser vi 'Drop er live'
-  if (timeLeft === "00:00") {
+    const tick = () => {
+      setRemainingMs(target - Date.now());
+    };
+
+    tick(); // første opdatering
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [mode, startsAt]);
+
+  // Kun relevant for upcoming
+  if (mode !== "upcoming" || !startsAt || remainingMs === null) return null;
+
+  // Hvis tiden er gået
+  if (remainingMs <= 0) {
     return (
       <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3 py-1">
         <span className="text-[11px] font-semibold text-emerald-300">
@@ -31,15 +44,18 @@ export function DropHeaderCountdown({ mode, startsAt, itemId }: Props) {
     );
   }
 
+  const totalSeconds = Math.floor(remainingMs / 1000);
+  const minutes = Math.floor(totalSeconds / 60)
+    .toString()
+    .padStart(2, "0");
+  const seconds = (totalSeconds % 60).toString().padStart(2, "0");
+
   return (
     <div className="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900/90 px-3 py-1">
       <span className="text-[11px] font-medium text-amber-300">
-        Dropper om {timeLeft}
+        Dropper om {minutes}:{seconds}
       </span>
-
       <span className="h-4 w-px bg-slate-700" />
-
-      {/* Reminder CTA */}
       <UpcomingReminder itemId={itemId} />
     </div>
   );
