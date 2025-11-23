@@ -14,7 +14,7 @@ export function MainHeader() {
         </Link>
 
         <div className={styles.right}>
-          {/* Nav-links – skjules på mobil via CSS */}
+          {/* Nav-links – skjules på mobil */}
           <nav className={styles.nav}>
             <Link href="/drops" className={styles.navLink}>
               Drops
@@ -27,8 +27,10 @@ export function MainHeader() {
             </Link>
           </nav>
 
-          {/* Neon theme toggle – altid synlig */}
-          <ThemeToggle />
+          {/* Theme toggle – skjules på mobil */}
+          <div className={styles.themeToggle}>
+            <ThemeToggle />
+          </div>
         </div>
       </div>
     </header>
