@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getItemById } from "@/lib/items";
+import { DropCountdown } from "@/components/DropCountdown";
 
 type Props = { params: { id: string } };
 
@@ -39,6 +40,10 @@ export default async function ItemPage({ params }: Props) {
               <span className="rounded-full border border-slate-700 bg-slate-900/80 px-3 py-1 text-[11px] text-slate-200">
                 1/1 piece
               </span>
+{item.drop?.ends_at && (
+    <DropCountdown endsAt={item.drop.ends_at} />
+  )}
+
 
               {/* Countdown placeholder */}
               <span className="rounded-full bg-slate-900/70 px-3 py-1 text-[11px] text-amber-300">
