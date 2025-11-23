@@ -193,13 +193,14 @@ export default async function ItemPage({ params }: Props) {
             </div>
 
             {/* Countdown + reminder badge i headeren */}
-            <div className="mt-2">
-              <DropHeaderCountdown
-                mode={mode}
-                startsAt={drop?.starts_at ?? null}
-                itemId={item.id}
-              />
-            </div>
+           {/* Countdown i headeren */}
+<div className="mt-2">
+  <DropHeaderCountdown
+    mode={mode}
+    startsAt={drop?.starts_at ?? null}
+  />
+</div>
+
           </div>
 
           {/* Desktop price-hero + CTA */}
