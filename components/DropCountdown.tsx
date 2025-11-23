@@ -2,33 +2,48 @@
 
 import { useEffect, useState } from "react";
 
-export function DropCountdown({ endsAt }: { endsAt: string }) {
-  const [remaining, setRemaining] = useState<number>(() => {
-    return new Date(endsAt).getTime() - Date.now();
-  });
+type Props = {
+  /** ISO-tidspunkt for hvornår droppet starter */
+  startsAt: string;
+  /** længde på drop i minutter – default 15 */
+  durationMinutes?: number;
+};
+
+export function DropCountdown({ startsAt, durationMinutes = 15 }: Props) {
+  const startMs = new Date(startsAt).getTime();
+  const endMs = startMs + durationMinutes * 60 * 1000;
+
+  const [remaining, setRemaining] = useState(endMs - Date.now());
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setRemaining(new Date(endsAt).getTime() - Date.now());
+    if (Number.isNaN(startMs)) return;
+
+    const id = setInterval(() => {
+      setRemaining(endMs - Date.now());
     }, 1000);
 
-    return () => clearInterval(interval);
-  }, [endsAt]);
+    return () => clearInterval(id);
+  }, [startMs, endMs]);
+
+  if (Number.isNaN(startMs)) return null;
 
   if (remaining <= 0) {
     return (
-      <span className="rounded-full bg-red-500/20 px-3 py-1 text-xs text-red-300">
-        Drop slut
+      <span className="rounded-full bg-amber-500/10 px-3 py-1 text-[11px] font-semibold text-amber-300">
+        Sluttet
       </span>
     );
   }
 
-  const minutes = Math.floor(remaining / 1000 / 60);
-  const seconds = Math.floor((remaining / 1000) % 60);
+  const totalSeconds = Math.floor(remaining / 1000);
+  const minutes = Math.floor(totalSeconds / 60)
+    .toString()
+    .padStart(2, "0");
+  const seconds = (totalSeconds % 60).toString().padStart(2, "0");
 
   return (
-    <span className="rounded-full bg-yellow-500/20 px-3 py-1 text-xs text-yellow-300">
-      Slutter om {minutes}:{seconds.toString().padStart(2, "0")}
+    <span className="rounded-full bg-amber-500/10 px-3 py-1 text-[11px] font-semibold text-amber-300">
+      Slutter om {minutes}:{seconds}
     </span>
   );
 }
