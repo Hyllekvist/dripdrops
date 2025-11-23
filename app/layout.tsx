@@ -30,11 +30,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="da">
-      <body className="bg-slate-950 text-slate-50">
-        <div className="fixed inset-0 -z-10">
-          <div className="absolute -top-40 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_center,#ff5cde33,#02061700)] blur-3xl" />
-          <div className="absolute bottom-0 right-0 h-72 w-72 rounded-full bg-[radial-gradient(circle_at_center,#00f0ff33,#02061700)] blur-3xl" />
+    // Default = dark theme. Kan skiftes til "light" via JS senere.
+    <html lang="da" data-theme="dark">
+      {/* Farver styres nu af CSS-variabler i globals.css */}
+      <body className="antialiased">
+        {/* Neon background glows – virker i både light og dark */}
+        <div className="pointer-events-none fixed inset-0 -z-10">
+          <div className="absolute -top-40 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_center,rgba(255,92,222,0.22),transparent)] blur-3xl" />
+          <div className="absolute bottom-0 right-0 h-72 w-72 rounded-full bg-[radial-gradient(circle_at_center,rgba(0,240,255,0.22),transparent)] blur-3xl" />
         </div>
 
         <MainHeader />
