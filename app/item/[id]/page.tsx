@@ -192,14 +192,15 @@ export default async function ItemPage({ params }: Props) {
                 </>
               )}
             </div>
+            
+            {/* Kun desktop – mobil får sticky CTA */}
+<div className="mt-2 hidden lg:block">
+  <DropHeaderCountdown
+    mode={mode}
+    startsAt={drop?.starts_at ?? null}
+  />
+</div>
 
-            {/* Countdown i headeren */}
-            <div className="mt-2">
-              <DropHeaderCountdown
-                mode={mode}
-                startsAt={drop?.starts_at ?? null}
-              />
-            </div>
           </div>
 
           {/* Desktop price-hero + CTA */}
