@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getItemById } from "@/lib/items";
 import { DropCountdown } from "@/components/DropCountdown";
+import { ItemAnalyticsShell } from "@/components/ItemAnalyticsShell";
 
 type Props = { params: { id: string } };
 
@@ -18,14 +19,7 @@ export default async function ItemPage({ params }: Props) {
   const item = await getItemById(params.id);
   if (!item) notFound();
 
-<ItemAnalyticsShell
-  itemId={item.id}
-  ai={item.aiAuthenticity}
-  price={item.price}
-/>
-
   const priceLabel = `${item.price.toLocaleString("da-DK")} kr`;
-
   const marketLabel =
     item.marketMin && item.marketMax
       ? `${item.marketMin.toLocaleString("da-DK")}–${item.marketMax.toLocaleString(
@@ -35,6 +29,13 @@ export default async function ItemPage({ params }: Props) {
 
   return (
     <>
+      {/* Analytics – client shell, gør ikke noget visuelt */}
+      <ItemAnalyticsShell
+        itemId={item.id}
+        ai={item.aiAuthenticity}
+        price={item.price}
+      />
+
       <div className="mx-auto max-w-5xl px-4 pb-32 pt-6 lg:pb-16 lg:pt-12">
         {/* Header block */}
         <div className="mb-6 flex items-start justify-between gap-4">
@@ -46,15 +47,11 @@ export default async function ItemPage({ params }: Props) {
               <span className="rounded-full border border-slate-700 bg-slate-900/80 px-3 py-1 text-[11px] text-slate-200">
                 1/1 piece
               </span>
-{item.drop?.ends_at && (
-    <DropCountdown endsAt={item.drop.ends_at} />
-  )}
 
-
-              {/* Countdown placeholder */}
-              <span className="rounded-full bg-slate-900/70 px-3 py-1 text-[11px] text-amber-300">
-                Slutter om 02:13
-              </span>
+              {/* ÆGTE countdown – kun hvis droppet har ends_at */}
+              {item.drop?.ends_at && (
+                <DropCountdown endsAt={item.drop.ends_at} />
+              )}
             </div>
 
             <h1 className="text-3xl font-semibold text-slate-50">
@@ -64,6 +61,15 @@ export default async function ItemPage({ params }: Props) {
             <p className="text-sm text-slate-400">
               {item.designer} · {item.brand}
             </p>
+
+            {item.drop && (
+              <p className="text-xs text-slate-500">
+                En del af{" "}
+                <span className="text-slate-200">
+                  {item.drop.title} · Drop #{item.drop.sequence}
+                </span>
+              </p>
+            )}
           </div>
 
           {/* Desktop CTA */}
@@ -209,7 +215,9 @@ export default async function ItemPage({ params }: Props) {
             <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
               Pris
             </p>
-            <p className="text-lg font-semibold text-slate-50">{priceLabel}</p>
+            <p className="text-lg font-semibold text-slate-50">
+              {priceLabel}
+            </p>
             {marketLabel && (
               <p className="text-[11px] text-emerald-300">
                 Markedsværdi: {marketLabel}
