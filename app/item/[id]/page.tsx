@@ -6,6 +6,7 @@ import { getDropById } from "@/lib/drops";
 import { ItemAnalyticsShell } from "@/components/ItemAnalyticsShell";
 import { UpcomingReminder } from "@/components/UpcomingReminder";
 import { DropHeaderCountdown } from "@/components/DropHeaderCountdown";
+import { ItemMobileStickyCta } from "@/components/ItemMobileStickyCta";
 
 type Props = { params: { id: string } };
 
@@ -192,15 +193,13 @@ export default async function ItemPage({ params }: Props) {
               )}
             </div>
 
-            {/* Countdown + reminder badge i headeren */}
-           {/* Countdown i headeren */}
-<div className="mt-2">
-  <DropHeaderCountdown
-    mode={mode}
-    startsAt={drop?.starts_at ?? null}
-  />
-</div>
-
+            {/* Countdown i headeren */}
+            <div className="mt-2">
+              <DropHeaderCountdown
+                mode={mode}
+                startsAt={drop?.starts_at ?? null}
+              />
+            </div>
           </div>
 
           {/* Desktop price-hero + CTA */}
@@ -224,12 +223,10 @@ export default async function ItemPage({ params }: Props) {
             )}
 
             {mode === "upcoming" && (
-              <>
+              <div className="mt-2 w-full">
                 {/* Reminder-CTA til upcoming drops (desktop) */}
-                <div className="mt-2">
-                  <UpcomingReminder itemId={item.id} />
-                </div>
-              </>
+                <UpcomingReminder itemId={item.id} />
+              </div>
             )}
 
             {mode === "expired" && (
@@ -380,46 +377,16 @@ export default async function ItemPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Sticky CTA – mobil */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-800/80 bg-slate-950/95 px-4 py-3 shadow-[0_-18px_40px_rgba(15,23,42,0.95)] lg:hidden">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
-          <div>
-            <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
-              {priceTitle}
-            </div>
-            <div className="text-lg font-semibold text-slate-50">
-              {priceLabel}
-            </div>
-            {marketLabel && (
-              <div className="text-[11px] text-emerald-300">
-                Markedsværdi: {marketLabel}
-              </div>
-            )}
-          </div>
-
-          {mode === "live" && (
-            <button className="dd-glow-cta flex-1 rounded-2xl bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-slate-950">
-              {primaryCtaLabel}
-            </button>
-          )}
-
-          {mode === "upcoming" && (
-            <div className="flex-1">
-              {/* Reminder-CTA til upcoming drops (mobil sticky) */}
-              <UpcomingReminder itemId={item.id} />
-            </div>
-          )}
-
-          {mode === "expired" && (
-            <Link
-              href="/drops"
-              className="flex-1 rounded-2xl border border-slate-600 bg-slate-900/90 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-[0.16em] text-slate-100"
-            >
-              {primaryCtaLabel}
-            </Link>
-          )}
-        </div>
-      </div>
+      {/* Sticky CTA – mobil (ny komponent) */}
+      <ItemMobileStickyCta
+        mode={mode}
+        priceTitle={priceTitle}
+        priceLabel={priceLabel}
+        marketLabel={marketLabel}
+        primaryCtaLabel={primaryCtaLabel}
+        itemId={item.id}
+        dropStartsAt={drop?.starts_at ?? null}
+      />
     </>
   );
 }
