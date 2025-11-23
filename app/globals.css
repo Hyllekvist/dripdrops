@@ -110,3 +110,44 @@ a {
 button {
   font: inherit;
 }
+
+/* -----------------------------------------------------
+   DRIPDROPS THEME TOGGLE
+----------------------------------------------------- */
+
+.dd-theme-toggle {
+  position: relative;
+  border-radius: 9999px;
+  cursor: pointer;
+}
+
+.dd-theme-toggle-thumb {
+  box-shadow:
+    0 0 0 1px rgba(15, 23, 42, 0.9),
+    0 0 22px rgba(255, 92, 222, 0.85);
+  transition:
+    transform 0.22s cubic-bezier(0.22, 0.61, 0.36, 1),
+    background 0.18s ease-out,
+    box-shadow 0.18s ease-out;
+  animation: dd-toggle-glow 2.4s ease-in-out infinite;
+}
+
+.dd-theme-toggle-thumb--light {
+  box-shadow:
+    0 0 0 1px rgba(15, 23, 42, 0.15),
+    0 0 22px rgba(56, 189, 248, 0.9);
+}
+
+@keyframes dd-toggle-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(15, 23, 42, 0.9),
+      0 0 18px rgba(255, 92, 222, 0.55);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(15, 23, 42, 0.9),
+      0 0 32px rgba(255, 184, 108, 0.95);
+  }
+}
