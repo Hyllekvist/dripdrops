@@ -7,9 +7,27 @@ export type Drop = {
   description: string | null;
   is_live: boolean;
   starts_at: string | null;
+  ends_at: string | null;     // ⬅ NY
 };
 
-export async function listActiveDrops(): Promise<(Drop & { startsAtLabel: string; isLive: boolean })[]> {
+function formatDate(d: string | null) {
+  if (!d) return "";
+  return new Date(d).toLocaleString("da-DK", {
+    hour: "2-digit",
+    minute: "2-digit",
+    day: "2-digit",
+    month: "2-digit",
+  });
+}
+
+export async function listActiveDrops(): Promise<
+  (Drop & {
+    startsAtLabel: string;
+    endsAtLabel: string;
+    isLive: boolean;
+    timeLeft: number | null;
+  })[]
+> {
   const supabase = supabaseServer();
   const { data, error } = await supabase
     .from("drops")
@@ -22,38 +40,53 @@ export async function listActiveDrops(): Promise<(Drop & { startsAtLabel: string
     return [];
   }
 
-  const drops = data ?? [];
-  return drops.map((d) => ({
-    ...d,
-    isLive: d.is_live,
-    startsAtLabel: d.starts_at
-      ? new Date(d.starts_at).toLocaleString("da-DK", {
-          hour: "2-digit",
-          minute: "2-digit",
-          day: "2-digit",
-          month: "2-digit",
-        })
-      : "",
-  }));
+  const now = Date.now();
+
+  return (data ?? []).map((d) => {
+    const ends = d.ends_at ? new Date(d.ends_at).getTime() : null;
+    const timeLeft = ends ? ends - now : null;
+
+    return {
+      ...d,
+      isLive: d.is_live,
+      startsAtLabel: formatDate(d.starts_at),
+      endsAtLabel: formatDate(d.ends_at),
+      timeLeft,
+    };
+  });
 }
 
-export async function getDropById(id: string): Promise<(Drop & { startsAtLabel: string; isLive: boolean }) | null> {
+export async function getDropById(
+  id: string
+): Promise<
+  (Drop & {
+    startsAtLabel: string;
+    endsAtLabel: string;
+    isLive: boolean;
+    timeLeft: number | null;
+  }) | null
+> {
   const supabase = supabaseServer();
-  const { data, error } = await supabase.from("drops").select("*").eq("id", id).maybeSingle<Drop>();
+  const { data, error } = await supabase
+    .from("drops")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle<Drop>();
+
   if (error || !data) {
     console.error("getDropById error", error);
     return null;
   }
+
+  const now = Date.now();
+  const ends = data.ends_at ? new Date(data.ends_at).getTime() : null;
+  const timeLeft = ends ? ends - now : null;
+
   return {
     ...data,
     isLive: data.is_live,
-    startsAtLabel: data.starts_at
-      ? new Date(data.starts_at).toLocaleString("da-DK", {
-          hour: "2-digit",
-          minute: "2-digit",
-          day: "2-digit",
-          month: "2-digit",
-        })
-      : "",
+    startsAtLabel: formatDate(data.starts_at),
+    endsAtLabel: formatDate(data.ends_at),
+    timeLeft,
   };
 }
