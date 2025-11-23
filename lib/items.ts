@@ -2,7 +2,7 @@
 import { supabaseServer } from "./supabaseServer";
 
 /**
- * Rå række fra Supabase (matcher præcis din items-tabel)
+ * Rå række fra Supabase (matcher din items-tabel)
  */
 export type ItemRow = {
   id: string;
@@ -56,7 +56,7 @@ export async function listItemsForDrop(dropId: string): Promise<UIItem[]> {
   const supabase = supabaseServer();
 
   const { data, error } = await supabase
-    .from<ItemRow>("items")
+    .from("items")
     .select("*")
     .eq("drop_id", dropId)
     .order("created_at", { ascending: true });
@@ -66,7 +66,7 @@ export async function listItemsForDrop(dropId: string): Promise<UIItem[]> {
     return [];
   }
 
-  const rows = data ?? [];
+  const rows = (data ?? []) as ItemRow[];
   return rows.map(mapRowToItem);
 }
 
@@ -77,7 +77,7 @@ export async function getItemById(id: string): Promise<UIItem | null> {
   const supabase = supabaseServer();
 
   const { data, error } = await supabase
-    .from<ItemRow>("items")
+    .from("items")
     .select("*")
     .eq("id", id)
     .maybeSingle();
@@ -87,5 +87,6 @@ export async function getItemById(id: string): Promise<UIItem | null> {
     return null;
   }
 
-  return mapRowToItem(data);
+  const row = data as ItemRow;
+  return mapRowToItem(row);
 }
