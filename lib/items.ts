@@ -1,57 +1,91 @@
+// lib/items.ts
 import { supabaseServer } from "./supabaseServer";
 
+/**
+ * Rå række fra Supabase (matcher præcis din items-tabel)
+ */
 export type ItemRow = {
   id: string;
+  drop_id: string | null;
   title: string;
-  designer: string | null;
   brand: string | null;
+  designer: string | null;
   price: number;
   market_min: number | null;
   market_max: number | null;
   ai_authenticity: number | null;
   description: string | null;
-  drop_id: string | null;
+  created_at: string;
 };
 
-export async function getItemById(id: string) {
-  const supabase = supabaseServer();
-  const { data, error } = await supabase
-    .from("items")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle<ItemRow>();
+/**
+ * UI-venlig type (camelCase) som resten af appen bruger
+ */
+export type UIItem = {
+  id: string;
+  dropId: string | null;
+  title: string;
+  brand: string | null;
+  designer: string | null;
+  price: number;
+  marketMin: number | null;
+  marketMax: number | null;
+  aiAuthenticity: number;
+  description: string | null;
+};
 
-  if (error || !data) {
-    console.error("getItemById error", error);
-    return null;
-  }
-
+function mapRowToItem(row: ItemRow): UIItem {
   return {
-    id: data.id,
-    title: data.title,
-    designer: data.designer ?? "",
-    brand: data.brand ?? "",
-    price: data.price,
-    marketMin: data.market_min ?? data.price,
-    marketMax: data.market_max ?? data.price,
-    aiAuthenticity: data.ai_authenticity ?? 80,
-    conditionLabel: "Patina, flot",
-    description: data.description ?? "",
+    id: row.id,
+    dropId: row.drop_id,
+    title: row.title,
+    brand: row.brand,
+    designer: row.designer,
+    price: row.price,
+    marketMin: row.market_min,
+    marketMax: row.market_max,
+    aiAuthenticity: row.ai_authenticity ?? 0,
+    description: row.description,
   };
 }
 
-export async function listItemsForDrop(dropId: string) {
+/**
+ * Hent alle items for et givent drop-id
+ */
+export async function listItemsForDrop(dropId: string): Promise<UIItem[]> {
   const supabase = supabaseServer();
+
   const { data, error } = await supabase
-    .from("items")
+    .from<ItemRow>("items")
     .select("*")
     .eq("drop_id", dropId)
     .order("created_at", { ascending: true });
 
-  if (error || !data) {
+  if (error) {
     console.error("listItemsForDrop error", error);
     return [];
   }
 
-  return data as ItemRow[];
+  const rows = data ?? [];
+  return rows.map(mapRowToItem);
+}
+
+/**
+ * Hent enkelt item efter id
+ */
+export async function getItemById(id: string): Promise<UIItem | null> {
+  const supabase = supabaseServer();
+
+  const { data, error } = await supabase
+    .from<ItemRow>("items")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error || !data) {
+    if (error) console.error("getItemById error", error);
+    return null;
+  }
+
+  return mapRowToItem(data);
 }
