@@ -60,7 +60,7 @@
   gap: 16px;
 }
 
-/* Nav-links blok (desktop/tablet) */
+/* Nav-links (kun større skærme) */
 .nav {
   display: flex;
   align-items: center;
@@ -87,15 +87,25 @@
   white-space: nowrap;
 }
 
-/* ---------- MOBILE LAYOUT ---------- */
+/* Wrapper til theme toggle */
+.themeToggle {
+  display: flex;
+}
+
+/* ---------- MOBILE ---------- */
 @media (max-width: 640px) {
   .inner {
     padding: 8px 12px;
     gap: 12px;
   }
 
-  /* Skjul nav-piller – efterlad kun logo + toggle */
+  /* Skjul nav */
   .nav {
+    display: none;
+  }
+
+  /* Skjul theme toggle på mobil */
+  .themeToggle {
     display: none;
   }
 
