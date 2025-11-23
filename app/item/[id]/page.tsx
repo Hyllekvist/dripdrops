@@ -26,16 +26,19 @@ export default async function ItemPage({ params }: Props) {
   const priceLabel = `${item.price.toLocaleString("da-DK")} kr`;
   const marketLabel =
     item.marketMin && item.marketMax
-      ? `${item.marketMin.toLocaleString("da-DK")}–${item.marketMax.toLocaleString(
+      ? `${item.marketMin.toLocaleString(
           "da-DK",
-        )} kr`
+        )}–${item.marketMax.toLocaleString("da-DK")} kr`
       : null;
 
-  // Simpel drop-status label – kan senere kobles til ægte countdown
+  const isLive = !!drop?.isLive;
+  const isUpcoming = !!drop && !drop.isLive;
+
+  // Drop-status pill
   let dropStatusLabel: string | null = null;
   if (drop) {
-    if (drop.isLive) {
-      dropStatusLabel = "Live drop";
+    if (isLive) {
+      dropStatusLabel = "Live i droppet";
     } else if (drop.startsAtLabel) {
       dropStatusLabel = `Starter ${drop.startsAtLabel}`;
     }
@@ -75,7 +78,13 @@ export default async function ItemPage({ params }: Props) {
                 1/1 piece
               </span>
               {dropStatusLabel && (
-                <span className="rounded-full bg-amber-400/15 px-3 py-1 text-[11px] font-medium text-amber-300">
+                <span
+                  className={
+                    isLive
+                      ? "rounded-full bg-emerald-400/15 px-3 py-1 text-[11px] font-medium text-emerald-300"
+                      : "rounded-full bg-amber-400/15 px-3 py-1 text-[11px] font-medium text-amber-300"
+                  }
+                >
                   {dropStatusLabel}
                 </span>
               )}
@@ -90,23 +99,42 @@ export default async function ItemPage({ params }: Props) {
               </p>
             </div>
 
-            {/* “Live stats” – kan senere kobles til rigtige data */}
+            {/* Live / upcoming micro-stats */}
             <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
-              <span className="inline-flex items-center gap-2 rounded-full bg-slate-900/90 px-3 py-1">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
-                37 kigger nu
-              </span>
-              <span className="rounded-full bg-slate-900/70 px-3 py-1">
-                5 har gemt
-              </span>
-              <span className="rounded-full bg-slate-900/70 px-3 py-1">
-                1 tilbage
-              </span>
+              {isLive ? (
+                <>
+                  <span className="inline-flex items-center gap-2 rounded-full bg-slate-900/90 px-3 py-1">
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+                    37 kigger nu
+                  </span>
+                  <span className="rounded-full bg-slate-900/70 px-3 py-1">
+                    5 har gemt
+                  </span>
+                  <span className="rounded-full bg-slate-900/70 px-3 py-1">
+                    1 tilbage
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="inline-flex items-center gap-2 rounded-full bg-slate-900/90 px-3 py-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-300" />
+                    Dropper snart – early preview
+                  </span>
+                  <span className="rounded-full bg-slate-900/70 px-3 py-1">
+                    Kun dette ene eksemplar
+                  </span>
+                  {marketLabel && (
+                    <span className="rounded-full bg-slate-900/70 px-3 py-1">
+                      Forventet markedsværdi: {marketLabel}
+                    </span>
+                  )}
+                </>
+              )}
             </div>
           </div>
 
           {/* Desktop price-hero + CTA */}
-          <div className="hidden min-w-[240px] flex-col items-end gap-2 text-right lg:flex">
+          <div className="hidden min-w-[260px] flex-col items-end gap-2 text-right lg:flex">
             <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
               Pris
             </div>
@@ -118,9 +146,22 @@ export default async function ItemPage({ params }: Props) {
                 Markedsværdi: {marketLabel}
               </div>
             )}
-            <button className="dd-glow-cta mt-2 rounded-2xl bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-slate-950">
-              Køb nu – reserver i 2:00 min
-            </button>
+
+            {isLive ? (
+              <button className="dd-glow-cta mt-2 rounded-2xl bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-slate-950">
+                Køb nu – reserver i 2:00 min
+              </button>
+            ) : (
+              <div className="mt-2 flex flex-col items-end gap-2">
+                <div className="rounded-2xl border border-slate-700/70 bg-slate-900/80 px-4 py-2 text-[11px] text-slate-300">
+                  Denne vare låses op, når droppet går live. Brug previewet til
+                  at beslutte dig i god tid.
+                </div>
+                <button className="rounded-2xl border border-slate-600 bg-slate-900/80 px-5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-100">
+                  Følg droppet – vær klar ved start
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -136,13 +177,23 @@ export default async function ItemPage({ params }: Props) {
                 }}
               />
               <div className="pointer-events-none absolute inset-0 rounded-3xl border border-white/5" />
+
+              {/* Overlay badge for upcoming */}
+              {isUpcoming && (
+                <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-center pt-4">
+                  <span className="rounded-full bg-slate-950/80 px-4 py-1 text-[11px] font-medium text-amber-200 backdrop-blur">
+                    Preview-mode · Varen kan først købes når droppet går live
+                  </span>
+                </div>
+              )}
+
               <div className="absolute left-4 bottom-4 flex flex-wrap gap-2">
                 <span className="rounded-full bg-slate-950/85 px-3 py-1 text-xs text-slate-100">
                   {item.title}
                 </span>
                 {drop && (
                   <span className="rounded-full bg-slate-950/85 px-3 py-1 text-xs text-slate-400">
-                    Live i {drop.title}
+                    {isLive ? "Live i" : "Kommer i"} {drop.title}
                   </span>
                 )}
               </div>
@@ -154,7 +205,7 @@ export default async function ItemPage({ params }: Props) {
 
           {/* INFO-SIDE */}
           <div className="space-y-6">
-            {/* Mobil price card */}
+            {/* Mobil price card (uden CTA hvis ikke live) */}
             <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4 shadow-[0_18px_40px_rgba(15,23,42,0.85)] lg:hidden">
               <div className="flex items-baseline justify-between gap-4">
                 <div>
@@ -170,6 +221,11 @@ export default async function ItemPage({ params }: Props) {
                     </div>
                   )}
                 </div>
+                {isUpcoming && drop?.startsAtLabel && (
+                  <div className="rounded-full bg-amber-400/15 px-3 py-1 text-[11px] font-medium text-amber-200">
+                    Starter {drop.startsAtLabel}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -220,35 +276,37 @@ export default async function ItemPage({ params }: Props) {
                 {item.description}
               </p>
               <p className="pt-1 text-[11px] text-slate-500">
-                Når tiden løber ud, er denne én væk. Der er kun dette ene
-                eksemplar i droppet.
+                Når droppet er slut, er denne væk. Der er kun dette ene eksemplar
+                i droppet.
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Sticky CTA – mobil */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-800/80 bg-slate-950/95 px-4 py-3 shadow-[0_-18px_40px_rgba(15,23,42,0.95)] lg:hidden">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
-          <div>
-            <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
-              Pris
-            </div>
-            <div className="text-lg font-semibold text-slate-50">
-              {priceLabel}
-            </div>
-            {marketLabel && (
-              <div className="text-[11px] text-emerald-300">
-                Markedsværdi: {marketLabel}
+      {/* Sticky CTA – kun når droppet er live */}
+      {isLive && (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-800/80 bg-slate-950/95 px-4 py-3 shadow-[0_-18px_40px_rgba(15,23,42,0.95)] lg:hidden">
+          <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
+            <div>
+              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                Pris
               </div>
-            )}
+              <div className="text-lg font-semibold text-slate-50">
+                {priceLabel}
+              </div>
+              {marketLabel && (
+                <div className="text-[11px] text-emerald-300">
+                  Markedsværdi: {marketLabel}
+                </div>
+              )}
+            </div>
+            <button className="dd-glow-cta flex-1 rounded-2xl bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-slate-950">
+              Køb nu – reserver i 2:00
+            </button>
           </div>
-          <button className="dd-glow-cta flex-1 rounded-2xl bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-slate-950">
-            Køb nu – reserver i 2:00
-          </button>
         </div>
-      </div>
+      )}
     </>
   );
 }
