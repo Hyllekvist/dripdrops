@@ -1,28 +1,80 @@
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { getItemById } from "@/lib/items";
+
+// ---- Cached data fetch (undgår dobbelt Supabase-call) ----
+const getItemByIdCached = cache(getItemById);
 
 type Props = { params: { id: string } };
 
+// ---- JSON-LD til SEO (Product + Offer) ----
+function ItemJsonLd({ item }: { item: any }) {
+  const price = item.price ?? 0;
+  const currency = "DKK";
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: item.title,
+    brand: item.brand || undefined,
+    description: item.description || undefined,
+    offers: {
+      "@type": "Offer",
+      price: price,
+      priceCurrency: currency,
+      availability: "https://schema.org/InStock",
+      itemCondition: "https://schema.org/UsedCondition",
+    },
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+}
+
 export async function generateMetadata({ params }: Props) {
-  const item = await getItemById(params.id);
+  const item = await getItemByIdCached(params.id);
   if (!item) return {};
+
+  const title = `${item.title} – DRIPDROPS`;
+  const descBase = item.description || `${item.designer} · ${item.brand}`;
+  const description = descBase.slice(0, 155); // safe meta length
+
   return {
-    title: `${item.title} – DRIPDROPS`,
-    description: `${item.designer} ${item.brand} · stand: ${item.conditionLabel}.`,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "product",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
   };
 }
 
 export default async function ItemPage({ params }: Props) {
-  const item = await getItemById(params.id);
+  const item = await getItemByIdCached(params.id);
   if (!item) notFound();
 
   const priceLabel = `${item.price.toLocaleString("da-DK")} kr`;
-  const marketLabel = `${item.marketMin.toLocaleString(
+  const marketMin = item.marketMin ?? item.price;
+  const marketMax = item.marketMax ?? item.price;
+  const marketLabel = `${marketMin.toLocaleString(
     "da-DK"
-  )}–${item.marketMax.toLocaleString("da-DK")} kr`;
+  )}–${marketMax.toLocaleString("da-DK")} kr`;
 
   return (
     <>
+      {/* SEO schema */}
+      <ItemJsonLd item={item} />
+
       <div className="mx-auto max-w-5xl px-4 pb-28 pt-6 lg:pb-12 lg:pt-10">
         <div className="mb-6 flex items-center justify-between gap-4">
           <div className="space-y-2">
@@ -39,7 +91,7 @@ export default async function ItemPage({ params }: Props) {
                 {item.title}
               </h1>
               <p className="mt-1 text-sm text-slate-400">
-                {item.designer} · {item.brand}
+                {[item.designer, item.brand].filter(Boolean).join(" · ")}
               </p>
             </div>
           </div>
@@ -55,9 +107,11 @@ export default async function ItemPage({ params }: Props) {
             <div className="text-xs text-emerald-300">
               Markedsværdi: {marketLabel}
             </div>
-            <button className="dd-glow-cta mt-2 rounded-2xl bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-slate-950">
-              Køb nu – reserver i 2:00 min
-            </button>
+            <ItemBuyCta
+              variant="primary"
+              label="Køb nu – reserver i 2:00 min"
+              itemId={item.id}
+            />
           </div>
         </div>
 
@@ -75,10 +129,10 @@ export default async function ItemPage({ params }: Props) {
               <div className="pointer-events-none absolute inset-0 rounded-3xl border border-white/5" />
               <div className="absolute left-4 bottom-4 flex flex-wrap gap-2">
                 <span className="rounded-full bg-slate-950/85 px-3 py-1 text-xs text-slate-100">
-                  The Spanish Chair
+                  {item.title}
                 </span>
                 <span className="rounded-full bg-slate-950/85 px-3 py-1 text-xs text-slate-400">
-                  Live i Design Classics #27
+                  Design Drop · 1/1 piece
                 </span>
               </div>
             </div>
@@ -154,7 +208,7 @@ export default async function ItemPage({ params }: Props) {
               <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
                 Beskrivelse
               </div>
-              <p className="text-sm leading-relaxed text-slate-200 whitespace-pre-line">
+              <p className="whitespace-pre-line text-sm leading-relaxed text-slate-200">
                 {item.description}
               </p>
             </div>
@@ -176,11 +230,17 @@ export default async function ItemPage({ params }: Props) {
               Markedsværdi: {marketLabel}
             </div>
           </div>
-          <button className="dd-glow-cta flex-1 rounded-2xl bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-slate-950">
-            Køb nu – reserver i 2:00
-          </button>
+          <ItemBuyCta
+            variant="primary"
+            label="Køb nu – reserver i 2:00"
+            itemId={item.id}
+            fullWidth
+          />
         </div>
       </div>
     </>
   );
 }
+
+// ---- Client CTA-komponent (inline import – se nedenfor fil) ----
+import ItemBuyCta from "@/components/ItemBuyCta";
