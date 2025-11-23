@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { cache } from "react";
 import { getItemById } from "@/lib/items";
 
-// ---- Cached data fetch (undgår dobbelt Supabase-call) ----
+// ---- Cachedf data fetch (undgår dobbelt Supabase-call) ----
 const getItemByIdCached = cache(getItemById);
 
 type Props = { params: { id: string } };
