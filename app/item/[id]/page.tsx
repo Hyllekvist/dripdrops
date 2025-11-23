@@ -5,6 +5,7 @@ import { getItemById } from "@/lib/items";
 import { getDropById } from "@/lib/drops";
 import { ItemAnalyticsShell } from "@/components/ItemAnalyticsShell";
 import { UpcomingReminder } from "@/components/UpcomingReminder";
+import { DropHeaderCountdown } from "@/components/DropHeaderCountdown";
 
 type Props = { params: { id: string } };
 
@@ -189,6 +190,15 @@ export default async function ItemPage({ params }: Props) {
                   </span>
                 </>
               )}
+            </div>
+
+            {/* Countdown + reminder badge i headeren */}
+            <div className="mt-2">
+              <DropHeaderCountdown
+                mode={mode}
+                startsAt={drop?.starts_at ?? null}
+                itemId={item.id}
+              />
             </div>
           </div>
 
