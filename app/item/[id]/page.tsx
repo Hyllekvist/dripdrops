@@ -1,4 +1,5 @@
 // app/item/[id]/page.tsx
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getItemById } from "@/lib/items";
 import { getDropById } from "@/lib/drops";
@@ -20,31 +21,46 @@ export default async function ItemPage({ params }: Props) {
   const item = await getItemById(params.id);
   if (!item) notFound();
 
-  // Hent drop-info (til label + fremtidig logik)
+  // Hent drop-info (til state + labels)
   const drop = item.dropId ? await getDropById(item.dropId) : null;
+
+  // ---- STATE: live / upcoming / expired -----------------------------------
+  type DropMode = "live" | "upcoming" | "expired";
+  let mode: DropMode = "live";
+
+  if (drop) {
+    if (drop.isLive) {
+      mode = "live";
+    } else if (drop.starts_at) {
+      const starts = new Date(drop.starts_at);
+      const now = new Date();
+      mode = starts.getTime() > now.getTime() ? "upcoming" : "expired";
+    } else {
+      mode = "expired";
+    }
+  }
 
   const priceLabel = `${item.price.toLocaleString("da-DK")} kr`;
   const marketLabel =
     item.marketMin && item.marketMax
-      ? `${item.marketMin.toLocaleString(
+      ? `${item.marketMin.toLocaleString("da-DK")}–${item.marketMax.toLocaleString(
           "da-DK",
-        )}–${item.marketMax.toLocaleString("da-DK")} kr`
+        )} kr`
       : null;
-
-  const isLive = !!drop?.isLive;
-  const isUpcoming = !!drop && !drop.isLive;
 
   // Drop-status pill
   let dropStatusLabel: string | null = null;
   if (drop) {
-    if (isLive) {
-      dropStatusLabel = "Live i droppet";
-    } else if (drop.startsAtLabel) {
+    if (mode === "live") {
+      dropStatusLabel = "Live drop";
+    } else if (mode === "upcoming" && drop.startsAtLabel) {
       dropStatusLabel = `Starter ${drop.startsAtLabel}`;
+    } else if (mode === "expired") {
+      dropStatusLabel = `Drop #${drop.sequence} er slut`;
     }
   }
 
-  // Grov vurdering af pris i forhold til markedsrange
+  // Pris-position ift. markedsrange
   let pricePositionLabel: string | null = null;
   if (item.marketMin && item.marketMax) {
     const mid = (item.marketMin + item.marketMax) / 2;
@@ -55,6 +71,44 @@ export default async function ItemPage({ params }: Props) {
     } else {
       pricePositionLabel = "Over typisk prisniveau";
     }
+  }
+
+  // CTA-tekst afhængigt af state
+  let primaryCtaLabel = "";
+  let primaryCtaSub = "";
+  let priceTitle = "Pris";
+
+  if (mode === "live") {
+    primaryCtaLabel = "Køb nu – reserver i 2:00";
+    primaryCtaSub =
+      "Du reserverer bare varen i 2 minutter. Betaling sker først i næste step.";
+    priceTitle = "Pris";
+  } else if (mode === "upcoming") {
+    primaryCtaLabel = "Få reminder når droppet åbner";
+    primaryCtaSub =
+      drop?.startsAtLabel
+        ? `Dropper ${drop.startsAtLabel}. Vi giver besked, når det går live.`
+        : "Dropper snart – få besked, når det åbner.";
+    priceTitle = "Forventet pris i droppet";
+  } else {
+    // expired
+    primaryCtaLabel = "Se kommende drops";
+    primaryCtaSub =
+      "Denne vare blev solgt i et tidligere drop. Hold øje med lignende i kommende drops.";
+    priceTitle = "Solgt for";
+  }
+
+  // Tekst efter beskrivelse afhængigt af state
+  let scarcityFooter = "";
+  if (mode === "live") {
+    scarcityFooter =
+      "Når tiden løber ud, er denne én væk. Der er kun dette ene eksemplar i droppet.";
+  } else if (mode === "upcoming") {
+    scarcityFooter =
+      "Når droppet åbner, er der kun ét eksemplar. Sæt reminder nu, hvis du vil have første skud.";
+  } else {
+    scarcityFooter =
+      "Denne vare er allerede røget. Brug kommende drops til at finde lignende pieces.";
   }
 
   return (
@@ -80,8 +134,8 @@ export default async function ItemPage({ params }: Props) {
               {dropStatusLabel && (
                 <span
                   className={
-                    isLive
-                      ? "rounded-full bg-emerald-400/15 px-3 py-1 text-[11px] font-medium text-emerald-300"
+                    mode === "expired"
+                      ? "rounded-full bg-slate-800/80 px-3 py-1 text-[11px] font-medium text-slate-200"
                       : "rounded-full bg-amber-400/15 px-3 py-1 text-[11px] font-medium text-amber-300"
                   }
                 >
@@ -99,9 +153,9 @@ export default async function ItemPage({ params }: Props) {
               </p>
             </div>
 
-            {/* Live / upcoming micro-stats */}
+            {/* “Live stats” – skifter let efter state */}
             <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
-              {isLive ? (
+              {mode === "live" && (
                 <>
                   <span className="inline-flex items-center gap-2 rounded-full bg-slate-900/90 px-3 py-1">
                     <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
@@ -114,20 +168,25 @@ export default async function ItemPage({ params }: Props) {
                     1 tilbage
                   </span>
                 </>
-              ) : (
+              )}
+              {mode === "upcoming" && (
                 <>
-                  <span className="inline-flex items-center gap-2 rounded-full bg-slate-900/90 px-3 py-1">
-                    <span className="h-1.5 w-1.5 rounded-full bg-amber-300" />
-                    Dropper snart – early preview
+                  <span className="rounded-full bg-slate-900/90 px-3 py-1">
+                    Dropper snart – early access via konto
                   </span>
                   <span className="rounded-full bg-slate-900/70 px-3 py-1">
-                    Kun dette ene eksemplar
+                    Gem varen for at få hurtig adgang
                   </span>
-                  {marketLabel && (
-                    <span className="rounded-full bg-slate-900/70 px-3 py-1">
-                      Forventet markedsværdi: {marketLabel}
-                    </span>
-                  )}
+                </>
+              )}
+              {mode === "expired" && (
+                <>
+                  <span className="rounded-full bg-slate-900/90 px-3 py-1">
+                    Solgt i tidligere drop
+                  </span>
+                  <span className="rounded-full bg-slate-900/70 px-3 py-1">
+                    Se kommende drops for lignende pieces
+                  </span>
                 </>
               )}
             </div>
@@ -136,7 +195,7 @@ export default async function ItemPage({ params }: Props) {
           {/* Desktop price-hero + CTA */}
           <div className="hidden min-w-[260px] flex-col items-end gap-2 text-right lg:flex">
             <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
-              Pris
+              {priceTitle}
             </div>
             <div className="text-2xl font-semibold text-slate-50">
               {priceLabel}
@@ -147,21 +206,30 @@ export default async function ItemPage({ params }: Props) {
               </div>
             )}
 
-            {isLive ? (
+            {mode === "live" && (
               <button className="dd-glow-cta mt-2 rounded-2xl bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-slate-950">
-                Køb nu – reserver i 2:00 min
+                {primaryCtaLabel}
               </button>
-            ) : (
-              <div className="mt-2 flex flex-col items-end gap-2">
-                <div className="rounded-2xl border border-slate-700/70 bg-slate-900/80 px-4 py-2 text-[11px] text-slate-300">
-                  Denne vare låses op, når droppet går live. Brug previewet til
-                  at beslutte dig i god tid.
-                </div>
-                <button className="rounded-2xl border border-slate-600 bg-slate-900/80 px-5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-100">
-                  Følg droppet – vær klar ved start
-                </button>
-              </div>
             )}
+
+            {mode === "upcoming" && (
+              <button className="mt-2 rounded-2xl border border-slate-600 bg-slate-900/90 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-slate-100">
+                {primaryCtaLabel}
+              </button>
+            )}
+
+            {mode === "expired" && (
+              <Link
+                href="/drops"
+                className="mt-2 rounded-2xl border border-slate-600 bg-slate-900/90 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-slate-100"
+              >
+                {primaryCtaLabel}
+              </Link>
+            )}
+
+            <p className="mt-1 max-w-xs text-[11px] text-slate-500">
+              {primaryCtaSub}
+            </p>
           </div>
         </div>
 
@@ -177,23 +245,15 @@ export default async function ItemPage({ params }: Props) {
                 }}
               />
               <div className="pointer-events-none absolute inset-0 rounded-3xl border border-white/5" />
-
-              {/* Overlay badge for upcoming */}
-              {isUpcoming && (
-                <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-center pt-4">
-                  <span className="rounded-full bg-slate-950/80 px-4 py-1 text-[11px] font-medium text-amber-200 backdrop-blur">
-                    Preview-mode · Varen kan først købes når droppet går live
-                  </span>
-                </div>
-              )}
-
               <div className="absolute left-4 bottom-4 flex flex-wrap gap-2">
                 <span className="rounded-full bg-slate-950/85 px-3 py-1 text-xs text-slate-100">
                   {item.title}
                 </span>
                 {drop && (
                   <span className="rounded-full bg-slate-950/85 px-3 py-1 text-xs text-slate-400">
-                    {isLive ? "Live i" : "Kommer i"} {drop.title}
+                    {mode === "expired"
+                      ? `Solgt i ${drop.title}`
+                      : `Live i ${drop.title}`}
                   </span>
                 )}
               </div>
@@ -205,12 +265,12 @@ export default async function ItemPage({ params }: Props) {
 
           {/* INFO-SIDE */}
           <div className="space-y-6">
-            {/* Mobil price card (uden CTA hvis ikke live) */}
+            {/* Mobil price card */}
             <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4 shadow-[0_18px_40px_rgba(15,23,42,0.85)] lg:hidden">
               <div className="flex items-baseline justify-between gap-4">
                 <div>
                   <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
-                    Pris
+                    {priceTitle}
                   </div>
                   <div className="text-2xl font-semibold text-slate-50">
                     {priceLabel}
@@ -221,11 +281,6 @@ export default async function ItemPage({ params }: Props) {
                     </div>
                   )}
                 </div>
-                {isUpcoming && drop?.startsAtLabel && (
-                  <div className="rounded-full bg-amber-400/15 px-3 py-1 text-[11px] font-medium text-amber-200">
-                    Starter {drop.startsAtLabel}
-                  </div>
-                )}
               </div>
             </div>
 
@@ -267,6 +322,34 @@ export default async function ItemPage({ params }: Props) {
               )}
             </div>
 
+            {/* “Sådan fungerer et drop”-forklaring */}
+            <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-950/80 p-4">
+              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                Sådan fungerer et DRIPDROP
+              </div>
+              {mode === "live" && (
+                <p className="text-xs leading-relaxed text-slate-300">
+                  1) Tryk “Køb nu” → 2) Varen reserveres i 2 minutter → 3) Du
+                  gennemfører betaling → 4) Sælger sender varen. Én session ad
+                  gangen, ingen uendelig scroll.
+                </p>
+              )}
+              {mode === "upcoming" && (
+                <p className="text-xs leading-relaxed text-slate-300">
+                  Når droppet går live, kan du købe med ét tap. Indtil da kan du
+                  sætte reminder og gemme varen, så du er klar, når timeren
+                  starter.
+                </p>
+              )}
+              {mode === "expired" && (
+                <p className="text-xs leading-relaxed text-slate-300">
+                  Drops er korte og vilde. Denne vare røg i et tidligere drop.
+                  Følg kommende drops, hvis du vil fange lignende pieces, før de
+                  forsvinder igen.
+                </p>
+              )}
+            </div>
+
             {/* BESKRIVELSE */}
             <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-950/80 p-4">
               <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
@@ -276,37 +359,52 @@ export default async function ItemPage({ params }: Props) {
                 {item.description}
               </p>
               <p className="pt-1 text-[11px] text-slate-500">
-                Når droppet er slut, er denne væk. Der er kun dette ene eksemplar
-                i droppet.
+                {scarcityFooter}
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Sticky CTA – kun når droppet er live */}
-      {isLive && (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-800/80 bg-slate-950/95 px-4 py-3 shadow-[0_-18px_40px_rgba(15,23,42,0.95)] lg:hidden">
-          <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
-            <div>
-              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
-                Pris
-              </div>
-              <div className="text-lg font-semibold text-slate-50">
-                {priceLabel}
-              </div>
-              {marketLabel && (
-                <div className="text-[11px] text-emerald-300">
-                  Markedsværdi: {marketLabel}
-                </div>
-              )}
+      {/* Sticky CTA – mobil */}
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-800/80 bg-slate-950/95 px-4 py-3 shadow-[0_-18px_40px_rgba(15,23,42,0.95)] lg:hidden">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
+          <div>
+            <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+              {priceTitle}
             </div>
-            <button className="dd-glow-cta flex-1 rounded-2xl bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-slate-950">
-              Køb nu – reserver i 2:00
-            </button>
+            <div className="text-lg font-semibold text-slate-50">
+              {priceLabel}
+            </div>
+            {marketLabel && (
+              <div className="text-[11px] text-emerald-300">
+                Markedsværdi: {marketLabel}
+              </div>
+            )}
           </div>
+
+          {mode === "live" && (
+            <button className="dd-glow-cta flex-1 rounded-2xl bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-slate-950">
+              {primaryCtaLabel}
+            </button>
+          )}
+
+          {mode === "upcoming" && (
+            <button className="flex-1 rounded-2xl border border-slate-600 bg-slate-900/90 px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-slate-100">
+              {primaryCtaLabel}
+            </button>
+          )}
+
+          {mode === "expired" && (
+            <Link
+              href="/drops"
+              className="flex-1 rounded-2xl border border-slate-600 bg-slate-900/90 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-[0.16em] text-slate-100"
+            >
+              {primaryCtaLabel}
+            </Link>
+          )}
         </div>
-      )}
+      </div>
     </>
   );
 }
