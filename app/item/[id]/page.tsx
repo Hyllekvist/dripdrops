@@ -51,10 +51,7 @@ export default async function ItemPage({ params }: Props) {
                 1/1 piece
               </span>
 
-              {/* ny countdown-pill baseret på drop.starts_at */}
-              {drop?.starts_at && (
-                <DropCountdown startsAt={drop.starts_at} />
-              )}
+           
             </div>
 
             <div>
