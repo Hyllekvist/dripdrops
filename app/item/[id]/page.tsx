@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getItemById } from "@/lib/items";
 import { getDropById } from "@/lib/drops";
 import { ItemAnalyticsShell } from "@/components/ItemAnalyticsShell";
+import { UpcomingReminder } from "@/components/UpcomingReminder";
 
 type Props = { params: { id: string } };
 
@@ -43,9 +44,9 @@ export default async function ItemPage({ params }: Props) {
   const priceLabel = `${item.price.toLocaleString("da-DK")} kr`;
   const marketLabel =
     item.marketMin && item.marketMax
-      ? `${item.marketMin.toLocaleString("da-DK")}–${item.marketMax.toLocaleString(
+      ? `${item.marketMin.toLocaleString(
           "da-DK",
-        )} kr`
+        )}–${item.marketMax.toLocaleString("da-DK")} kr`
       : null;
 
   // Drop-status pill
@@ -85,10 +86,9 @@ export default async function ItemPage({ params }: Props) {
     priceTitle = "Pris";
   } else if (mode === "upcoming") {
     primaryCtaLabel = "Få reminder når droppet åbner";
-    primaryCtaSub =
-      drop?.startsAtLabel
-        ? `Dropper ${drop.startsAtLabel}. Vi giver besked, når det går live.`
-        : "Dropper snart – få besked, når det åbner.";
+    primaryCtaSub = drop?.startsAtLabel
+      ? `Dropper ${drop.startsAtLabel}. Vi giver besked, når det går live.`
+      : "Dropper snart – få besked, når det åbner.";
     priceTitle = "Forventet pris i droppet";
   } else {
     // expired
@@ -213,9 +213,12 @@ export default async function ItemPage({ params }: Props) {
             )}
 
             {mode === "upcoming" && (
-              <button className="mt-2 rounded-2xl border border-slate-600 bg-slate-900/90 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-slate-100">
-                {primaryCtaLabel}
-              </button>
+              <>
+                {/* Reminder-CTA til upcoming drops (desktop) */}
+                <div className="mt-2">
+                  <UpcomingReminder itemId={item.id} />
+                </div>
+              </>
             )}
 
             {mode === "expired" && (
@@ -390,9 +393,10 @@ export default async function ItemPage({ params }: Props) {
           )}
 
           {mode === "upcoming" && (
-            <button className="flex-1 rounded-2xl border border-slate-600 bg-slate-900/90 px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-slate-100">
-              {primaryCtaLabel}
-            </button>
+            <div className="flex-1">
+              {/* Reminder-CTA til upcoming drops (mobil sticky) */}
+              <UpcomingReminder itemId={item.id} />
+            </div>
           )}
 
           {mode === "expired" && (
