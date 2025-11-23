@@ -46,4 +46,7 @@ export function DropHeaderCountdown({ mode, startsAt }: Props) {
 
   return (
     <span className="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900/90 px-3 py-1 text-[11px] font-medium text-amber-300">
-      Dropper om
+      Dropper om {minutes}:{seconds}
+    </span>
+  );
+}
