@@ -2,11 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* -----------------------------------------------------
+   THEME VARIABLES
+----------------------------------------------------- */
 
+/* DARK THEME (default) */
 :root {
   --dd-bg: #020617;
   --dd-bg-elevated: #0f172a;
   --dd-bg-soft: #1e293b;
+
   --dd-ink: #f9fafb;
   --dd-ink-muted: #9ca3af;
 
@@ -22,6 +27,28 @@
   --dd-shadow-neon: 0 18px 45px rgba(248, 113, 113, 0.5);
 }
 
+/* LIGHT THEME OVERRIDES */
+:root[data-theme="light"] {
+  --dd-bg: #f8fafc;
+  --dd-bg-elevated: #ffffff;
+  --dd-bg-soft: #f1f5f9;
+
+  --dd-ink: #0f172a;
+  --dd-ink-muted: #475569;
+
+  /* NEON OPERATION — unchanged */
+  --dd-neon-pink: #ff5cde;
+  --dd-neon-orange: #ff8a3d;
+  --dd-neon-yellow: #ffd74a;
+  --dd-neon-cyan: #00f0ff;
+  --dd-neon-purple: #a466ff;
+
+  --dd-shadow-neon: 0 15px 35px rgba(255, 94, 98, 0.25);
+}
+
+/* -----------------------------------------------------
+   GLOBAL RESETS
+----------------------------------------------------- */
 *,
 *::before,
 *::after {
@@ -37,13 +64,19 @@ body {
 body {
   min-height: 100vh;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
-  background: #020617;
+  background: var(--dd-bg);
   color: var(--dd-ink);
+  transition: background 0.25s ease, color 0.25s ease;
 }
+
+/* -----------------------------------------------------
+   COMPONENT UTILS
+----------------------------------------------------- */
 
 .dd-gradient-border {
   position: relative;
 }
+
 .dd-gradient-border::before {
   content: "";
   position: absolute;
