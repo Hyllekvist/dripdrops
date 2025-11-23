@@ -18,6 +18,12 @@ export default async function ItemPage({ params }: Props) {
   const item = await getItemById(params.id);
   if (!item) notFound();
 
+<ItemAnalyticsShell
+  itemId={item.id}
+  ai={item.aiAuthenticity}
+  price={item.price}
+/>
+
   const priceLabel = `${item.price.toLocaleString("da-DK")} kr`;
 
   const marketLabel =
