@@ -19,6 +19,19 @@ export type ItemRow = {
 };
 
 /**
+ * Drop-data som et item kan være knyttet til
+ * (brugt til countdown + badge)
+ */
+export type UIDropForItem = {
+  id: string;
+  title: string;
+  sequence: number;
+  is_live: boolean;
+  starts_at: string | null;
+  ends_at: string | null;
+};
+
+/**
  * UI-venlig type (camelCase) som resten af appen bruger
  */
 export type UIItem = {
@@ -32,6 +45,7 @@ export type UIItem = {
   marketMax: number | null;
   aiAuthenticity: number;
   description: string | null;
+  drop?: UIDropForItem | null; // ⬅ ekstra felt når vi henter enkelt item
 };
 
 function mapRowToItem(row: ItemRow): UIItem {
@@ -46,6 +60,7 @@ function mapRowToItem(row: ItemRow): UIItem {
     marketMax: row.market_max,
     aiAuthenticity: row.ai_authenticity ?? 0,
     description: row.description,
+    // drop sættes kun i getItemById, så her lader vi den være undefined
   };
 }
 
@@ -71,14 +86,26 @@ export async function listItemsForDrop(dropId: string): Promise<UIItem[]> {
 }
 
 /**
- * Hent enkelt item efter id
+ * Hent enkelt item efter id – inkl. tilknyttet drop
  */
 export async function getItemById(id: string): Promise<UIItem | null> {
   const supabase = supabaseServer();
 
   const { data, error } = await supabase
     .from("items")
-    .select("*")
+    .select(
+      `
+      *,
+      drops (
+        id,
+        title,
+        sequence,
+        is_live,
+        starts_at,
+        ends_at
+      )
+    `
+    )
     .eq("id", id)
     .maybeSingle();
 
@@ -87,6 +114,13 @@ export async function getItemById(id: string): Promise<UIItem | null> {
     return null;
   }
 
-  const row = data as ItemRow;
-  return mapRowToItem(row);
+  // data har nu både item-felter og et nested "drops"
+  const row = data as ItemRow & { drops: UIDropForItem | null };
+
+  const base = mapRowToItem(row);
+
+  return {
+    ...base,
+    drop: row.drops ?? null,
+  };
 }
