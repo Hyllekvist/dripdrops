@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import styles from "./MainHeader.module.css";
-import { ThemeToggle } from "@/components/layout/ThemeToggle";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function MainHeader() {
   return (
