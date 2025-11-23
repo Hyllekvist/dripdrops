@@ -85,25 +85,28 @@ export default async function DropPage({ params }: Props) {
                 href={`/item/${item.id}`}
                 className="group flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-950/80 p-4 transition hover:-translate-y-0.5 hover:border-slate-500"
               >
+                {/* Placeholder billede */}
                 <div className="h-32 rounded-xl bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950" />
+
                 <div className="space-y-1">
-                  <div className="text-sm font-semibold text-slate-50 line-clamp-1">
+                  <div className="line-clamp-1 text-sm font-semibold text-slate-50">
                     {item.title}
                   </div>
-                  <p className="text-xs text-slate-400 line-clamp-1">
+                  <p className="line-clamp-1 text-xs text-slate-400">
                     {[item.designer, item.brand].filter(Boolean).join(" · ")}
                   </p>
                 </div>
+
                 <div className="mt-1 flex items-center justify-between text-xs text-slate-400">
                   <div>
                     <div className="text-slate-100">
                       {item.price.toLocaleString("da-DK")} kr
                     </div>
-                    {item.marketMin && item.marketMax && (
+                    {item.market_min && item.market_max && (
                       <div className="text-[11px] text-emerald-300">
                         Markedsværdi:{" "}
-                        {item.marketMin.toLocaleString("da-DK")}–
-                        {item.marketMax.toLocaleString("da-DK")} kr
+                        {item.market_min.toLocaleString("da-DK")}–
+                        {item.market_max.toLocaleString("da-DK")} kr
                       </div>
                     )}
                   </div>
