@@ -192,15 +192,11 @@ export default async function ItemPage({ params }: Props) {
                 </>
               )}
             </div>
-            
-            {/* Kun desktop – mobil får sticky CTA */}
-<div className="mt-2 hidden lg:block">
-  <DropHeaderCountdown
-    mode={mode}
-    startsAt={drop?.starts_at ?? null}
-  />
-</div>
 
+            {/* Countdown i headeren */}
+            <div className="mt-2">
+              <DropHeaderCountdown mode={mode} startsAt={drop?.starts_at ?? null} />
+            </div>
           </div>
 
           {/* Desktop price-hero + CTA */}
@@ -224,8 +220,7 @@ export default async function ItemPage({ params }: Props) {
             )}
 
             {mode === "upcoming" && (
-              <div className="mt-2 w-full">
-                {/* Reminder-CTA til upcoming drops (desktop) */}
+              <div className="mt-2">
                 <UpcomingReminder itemId={item.id} />
               </div>
             )}
@@ -277,7 +272,7 @@ export default async function ItemPage({ params }: Props) {
 
           {/* INFO-SIDE */}
           <div className="space-y-6">
-            {/* Mobil price card */}
+            {/* Mobil price card (ikke sticky) */}
             <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4 shadow-[0_18px_40px_rgba(15,23,42,0.85)] lg:hidden">
               <div className="flex items-baseline justify-between gap-4">
                 <div>
@@ -386,7 +381,6 @@ export default async function ItemPage({ params }: Props) {
         marketLabel={marketLabel}
         primaryCtaLabel={primaryCtaLabel}
         itemId={item.id}
-        dropStartsAt={drop?.starts_at ?? null}
       />
     </>
   );
