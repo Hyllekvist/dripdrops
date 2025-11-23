@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import styles from "./MainHeader.module.css";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 
 export function MainHeader() {
   return (
@@ -22,6 +23,9 @@ export function MainHeader() {
           <Link href="/account" className={styles.navLinkMuted}>
             Konto
           </Link>
+
+          {/* 🔥 Fancy neon theme-toggle */}
+          <ThemeToggle />
         </div>
       </div>
     </header>
