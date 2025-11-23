@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 type Props = {
-  /** ISO-tidspunkt for hvornår droppet slutter */
+  /** ISO-tidspunkt for hvornår droppet sluttcxer */
   endsAt: string;
 };
 
