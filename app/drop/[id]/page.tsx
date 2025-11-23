@@ -1,157 +1,133 @@
 import { notFound } from "next/navigation";
-import { getItemById } from "@/lib/items";
+import Link from "next/link";
+import { getDropById } from "@/lib/drops";
+import { listItemsForDrop } from "@/lib/items";
 
 type Props = { params: { id: string } };
 
 export async function generateMetadata({ params }: Props) {
-  const item = await getItemById(params.id);
-  if (!item) return {};
+  const drop = await getDropById(params.id);
+  if (!drop) return {};
+
+  const title = `${drop.title} – Drop #${drop.sequence} | DRIPDROPS`;
+  const description =
+    drop.description ??
+    "Kurateret drop med design, møbler og fashion i begrænset tid.";
+
   return {
-    title: `${item.title} – DRIPDROPS`,
-    description: `${item.designer ?? ""} ${item.brand ?? ""}`.trim(),
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
   };
 }
 
-export default async function ItemPage({ params }: Props) {
-  const item = await getItemById(params.id);
-  if (!item) notFound();
+export default async function DropPage({ params }: Props) {
+  const drop = await getDropById(params.id);
+  if (!drop) notFound();
 
-  const priceLabel = `${item.price.toLocaleString("da-DK")} kr`;
+  const items = await listItemsForDrop(drop.id);
 
-  const marketLabel =
-    item.market_min && item.market_max
-      ? `${item.market_min.toLocaleString("da-DK")}–${item.market_max.toLocaleString("da-DK")} kr`
-      : null;
+  const isLive = drop.isLive;
+  const label = isLive ? "Live lige nu" : "Kommende drop";
 
   return (
-    <>
-      <div className="mx-auto max-w-5xl px-4 pb-28 pt-6 lg:pb-12 lg:pt-10">
-        <div className="mb-6 flex items-center justify-between gap-4">
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full border border-fuchsia-500/60 bg-fuchsia-500/10 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-fuchsia-100">
-                Design Drop
-              </span>
-              <span className="rounded-full border border-slate-700 bg-slate-900/80 px-3 py-1 text-[11px] text-slate-200">
-                1/1 piece
-              </span>
-            </div>
-
-            <div>
-              <h1 className="text-2xl font-semibold text-slate-50 lg:text-3xl">
-                {item.title}
-              </h1>
-              <p className="mt-1 text-sm text-slate-400">
-                {item.designer} · {item.brand}
-              </p>
-            </div>
-          </div>
-
-          {/* Desktop CTA */}
-          <div className="hidden flex-col items-end gap-2 text-right lg:flex">
-            <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
-              Pris
-            </div>
-            <div className="text-2xl font-semibold text-slate-50">
-              {priceLabel}
-            </div>
-            {marketLabel && (
-              <div className="text-xs text-emerald-300">
-                Markedsværdi: {marketLabel}
-              </div>
-            )}
-            <button className="dd-glow-cta mt-2 rounded-2xl bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-slate-950">
-              Køb nu – reserver i 2:00 min
-            </button>
-          </div>
+    <div className="mx-auto max-w-5xl px-4 py-10 space-y-8">
+      <header className="space-y-3">
+        <div className="inline-flex items-center gap-2 rounded-full border border-fuchsia-500/60 bg-fuchsia-500/10 px-3 py-1">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-fuchsia-100">
+            {label}
+          </span>
+          <span className="text-[11px] text-slate-400">
+            Drop #{drop.sequence}
+          </span>
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-start">
-          {/* Gallery */}
-          <div className="space-y-4">
-            <div className="relative aspect-[4/3] overflow-hidden rounded-3xl border border-slate-800 bg-slate-900">
-              <div
-                className="h-full w-full"
-                style={{
-                  background:
-                    "radial-gradient(circle at center, #eab30833, #020617 70%)",
-                }}
-              />
-              <div className="pointer-events-none absolute inset-0 rounded-3xl border border-white/5" />
-              <div className="absolute left-4 bottom-4 flex flex-wrap gap-2">
-                <span className="rounded-full bg-slate-950/85 px-3 py-1 text-xs text-slate-100">
-                  {item.title}
-                </span>
-                <span className="rounded-full bg-slate-950/85 px-3 py-1 text-xs text-slate-400">
-                  Live i Design Classics
-                </span>
-              </div>
-            </div>
-          </div>
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-50 sm:text-3xl">
+            {drop.title}
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm text-slate-400">
+            {drop.description ??
+              "Kurateret session med nøje udvalgte pieces. Ét drop ad gangen – ingen uendelig scroll."}
+          </p>
+        </div>
 
-          {/* Info */}
-          <div className="space-y-6">
+        <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
+          {drop.startsAtLabel && (
+            <span>
+              {isLive ? "Startede" : "Starter"}: {drop.startsAtLabel}
+            </span>
+          )}
+          <span className="h-1 w-1 rounded-full bg-slate-600" />
+          <span>{items.length} items i dette drop</span>
+        </div>
+      </header>
 
-            {/* AI authenticity */}
-            <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-950/80 p-4">
-              <div className="flex items-center justify-between gap-2">
-                <div>
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
-                    AI authenticity check
+      {items.length > 0 ? (
+        <section className="space-y-3">
+          <h2 className="text-sm font-semibold text-slate-100">
+            Items i dette drop
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {items.map((item) => {
+              const marketLabel =
+                item.marketMin && item.marketMax
+                  ? `${item.marketMin.toLocaleString("da-DK")}–${item.marketMax.toLocaleString(
+                      "da-DK",
+                    )} kr`
+                  : null;
+
+              return (
+                <Link
+                  key={item.id}
+                  href={`/item/${item.id}`}
+                  className="group flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-950/80 p-4 transition hover:-translate-y-0.5 hover:border-slate-500"
+                >
+                  <div className="h-32 rounded-xl bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950" />
+
+                  <div className="space-y-1">
+                    <div className="line-clamp-1 text-sm font-semibold text-slate-50">
+                      {item.title}
+                    </div>
+                    <p className="line-clamp-1 text-xs text-slate-400">
+                      {[item.designer, item.brand].filter(Boolean).join(" · ")}
+                    </p>
                   </div>
 
-                  <p className="mt-1 text-xs text-slate-400">
-                    {item.ai_authenticity}% sandsynlig original baseret på billeder og pris.
-                  </p>
-                </div>
-                <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-300">
-                  {item.ai_authenticity}% match
-                </span>
-              </div>
-
-              <div className="mt-3 h-1.5 w-full rounded-full bg-slate-800">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-emerald-300 to-amber-300"
-                  style={{ width: `${item.ai_authenticity}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Description */}
-            <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-950/80 p-4">
-              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
-                Beskrivelse
-              </div>
-              <p className="text-sm leading-relaxed text-slate-200 whitespace-pre-line">
-                {item.description}
-              </p>
-            </div>
+                  <div className="mt-1 flex items-center justify-between text-xs text-slate-400">
+                    <div>
+                      <div className="text-slate-100">
+                        {item.price.toLocaleString("da-DK")} kr
+                      </div>
+                      {marketLabel && (
+                        <div className="text-[11px] text-emerald-300">
+                          Markedsværdi: {marketLabel}
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-slate-300 group-hover:text-slate-100">
+                      Se varen →
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
-        </div>
-      </div>
-
-      {/* Sticky CTA – mobile */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-800/80 bg-slate-950/95 px-4 py-3 shadow-[0_-18px_40px_rgba(15,23,42,0.95)] lg:hidden">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
-          <div>
-            <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
-              Pris
-            </div>
-            <div className="text-lg font-semibold text-slate-50">
-              {priceLabel}
-            </div>
-            {marketLabel && (
-              <div className="text-[11px] text-emerald-300">
-                Markedsværdi: {marketLabel}
-              </div>
-            )}
-          </div>
-
-          <button className="dd-glow-cta flex-1 rounded-2xl bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-slate-950">
-            Køb nu – reserver i 2:00
-          </button>
-        </div>
-      </div>
-    </>
+        </section>
+      ) : (
+        <p className="text-sm text-slate-500">
+          Der er endnu ikke tilføjet items til dette drop.
+        </p>
+      )}
+    </div>
   );
 }
