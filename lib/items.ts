@@ -10,6 +10,7 @@ export type ItemRow = {
   market_max: number | null;
   ai_authenticity: number | null;
   description: string | null;
+  drop_id: string | null;
 };
 
 export async function getItemById(id: string) {
@@ -37,4 +38,20 @@ export async function getItemById(id: string) {
     conditionLabel: "Patina, flot",
     description: data.description ?? "",
   };
+}
+
+export async function listItemsForDrop(dropId: string) {
+  const supabase = supabaseServer();
+  const { data, error } = await supabase
+    .from("items")
+    .select("*")
+    .eq("drop_id", dropId)
+    .order("created_at", { ascending: true });
+
+  if (error || !data) {
+    console.error("listItemsForDrop error", error);
+    return [];
+  }
+
+  return data as ItemRow[];
 }
