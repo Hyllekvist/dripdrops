@@ -1,208 +1,139 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-
-type PriceInput = number | "";
 
 export function SellFormClient() {
   const router = useRouter();
 
   const [title, setTitle] = useState("");
   const [brand, setBrand] = useState("");
-  const [price, setPrice] = useState<PriceInput>("");
-  const [description, setDescription] = useState("");
-  const [condition, setCondition] = useState("meget_pæn");
+  const [price, setPrice] = useState<number | "">("");
+  const [images, setImages] = useState<File[]>([]);
+  const [condition, setCondition] = useState("God stand");
   const [email, setEmail] = useState("");
-  const [files, setFiles] = useState<FileList | null>(null);
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setErrorMsg(null);
+  async function submit() {
+    setLoading(true);
 
-    if (!title.trim()) {
-      setErrorMsg("Angiv mindst en titel på varen.");
-      return;
-    }
+    const fd = new FormData();
+    fd.append("title", title);
+    fd.append("brand", brand);
+    fd.append("price", price ? String(price) : "");
+    fd.append("condition", condition);
+    fd.append("email", email);
 
-    if (!price || typeof price !== "number" || price <= 0) {
-      setErrorMsg("Angiv en realistisk prisidé (større end 0).");
-      return;
-    }
+    images.forEach((file) => fd.append("images", file));
 
-    if (!email.trim()) {
-      setErrorMsg("Angiv din mail, så vi kan vende tilbage.");
-      return;
-    }
+    const res = await fetch("/api/sell", {
+      method: "POST",
+      body: fd,
+    });
 
-    if (!files || files.length === 0) {
-      setErrorMsg("Upload mindst ét billede af varen.");
-      return;
-    }
+    setLoading(false);
 
-    setIsSubmitting(true);
-    try {
-      const formData = new FormData();
-      formData.append("title", title);
-      formData.append("brand", brand);
-      formData.append("price", String(price));
-      formData.append("description", description);
-      formData.append("condition", condition);
-      formData.append("email", email);
-      Array.from(files).forEach((file) => {
-        formData.append("images", file);
-      });
-
-      const res = await fetch("/api/sell", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) {
-        throw new Error("Server-fejl");
-      }
-
-      // Gem et lille snapshot til tak-siden
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem(
-          "dd_last_sell_submission",
-          JSON.stringify({
-            title,
-            brand,
-            price: typeof price === "number" ? price : null,
-            condition,
-          })
-        );
-      }
-
+    if (res.ok) {
       router.push("/sell/thanks");
-    } catch (err) {
-      console.error(err);
-      setErrorMsg(
-        "Der skete en fejl under upload. Prøv igen om lidt – eller tjek din forbindelse."
-      );
-    } finally {
-      setIsSubmitting(false);
+    } else {
+      alert("Der opstod en fejl med upload.");
     }
-  };
+  }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      {/* Basis info */}
-      <div className="space-y-3">
-        <div className="text-xs uppercase tracking-[0.18em] text-slate-400">
-          Basis info
-        </div>
-        <label className="block text-sm text-slate-200">
-          Titel
-          <input
-            className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 placeholder:text-slate-500 focus:border-slate-400 focus:outline-none"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Fx The Spanish Chair"
-          />
-        </label>
-        <label className="block text-sm text-slate-200">
-          Brand / producent
-          <input
-            className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 placeholder:text-slate-500 focus:border-slate-400 focus:outline-none"
-            value={brand}
-            onChange={(e) => setBrand(e.target.value)}
-            placeholder="Fx Fredericia, Acne Studios, Supreme"
-          />
-        </label>
-        <label className="block text-sm text-slate-200">
-          Prisidé (DKK)
-          <input
-            type="number"
-            min={0}
-            className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 placeholder:text-slate-500 focus:border-slate-400 focus:outline-none"
-            value={price}
-            onChange={(e) =>
-              setPrice(e.target.value ? Number(e.target.value) : "")
-            }
-            placeholder="Fx 9.500"
-          />
-        </label>
+    <form
+      className="space-y-4 rounded-2xl border border-slate-800 bg-slate-950/80 p-4"
+      onSubmit={(e) => {
+        e.preventDefault();
+        submit();
+      }}
+    >
+      <div className="text-xs uppercase tracking-[0.18em] text-slate-400">
+        Basis info
       </div>
 
-      {/* Detaljer */}
-      <div className="space-y-3">
-        <div className="text-xs uppercase tracking-[0.18em] text-slate-400">
-          Detaljer
-        </div>
-        <label className="block text-sm text-slate-200">
-          Kort beskrivelse
-          <textarea
-            className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 placeholder:text-slate-500 focus:border-slate-400 focus:outline-none"
-            rows={4}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Fortæl kort om stand, alder, købssted og evt. original emballage."
-          />
-        </label>
+      <label className="block text-sm">
+        Titel
+        <input
+          style={{ fontSize: 16 }}
+          className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+      </label>
 
-        <label className="block text-sm text-slate-200">
-          Stand
-          <select
-            className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 focus:border-slate-400 focus:outline-none"
-            value={condition}
-            onChange={(e) => setCondition(e.target.value)}
-          >
-            <option value="som_ny">Som ny</option>
-            <option value="meget_pæn">Meget pæn brugt stand</option>
-            <option value="brugsspor">Brugt med synlige brugsspor</option>
-          </select>
-        </label>
-      </div>
+      <label className="block text-sm">
+        Brand
+        <input
+          style={{ fontSize: 16 }}
+          className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2"
+          value={brand}
+          onChange={(e) => setBrand(e.target.value)}
+        />
+      </label>
 
-      {/* Kontakt + billeder */}
-      <div className="space-y-3">
-        <div className="text-xs uppercase tracking-[0.18em] text-slate-400">
-          Kontakt & billeder
-        </div>
+      <label className="block text-sm">
+        Prisidé
+        <input
+          type="number"
+          style={{ fontSize: 16 }}
+          className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2"
+          value={price}
+          onChange={(e) =>
+            setPrice(e.target.value ? Number(e.target.value) : "")
+          }
+        />
+      </label>
 
-        <label className="block text-sm text-slate-200">
-          Din mail
-          <input
-            type="email"
-            className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 placeholder:text-slate-500 focus:border-slate-400 focus:outline-none"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Din mail til opfølgning"
-          />
-        </label>
+      <label className="block text-sm">
+        Stand
+        <select
+          style={{ fontSize: 16 }}
+          className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2"
+          value={condition}
+          onChange={(e) => setCondition(e.target.value)}
+        >
+          <option>Som ny</option>
+          <option>Rigtig god</option>
+          <option>God stand</option>
+          <option>Brugt men ok</option>
+        </select>
+      </label>
 
-        <label className="block text-sm text-slate-200">
-          Billeder (3–6 anbefalet)
-          <input
-            type="file"
-            multiple
-            accept="image/*"
-            className="mt-1 w-full text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-800 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-slate-100 hover:file:bg-slate-700"
-            onChange={(e) => setFiles(e.target.files)}
-          />
-          <p className="mt-1 text-[11px] text-slate-500">
-            Brug naturligt lys, vis både helhed og detaljer. Undgå collager.
-          </p>
-        </label>
-      </div>
+      <label className="block text-sm">
+        Email
+        <input
+          type="email"
+          style={{ fontSize: 16 }}
+          className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+      </label>
 
-      {errorMsg && (
-        <p className="text-xs text-rose-400 bg-rose-950/40 border border-rose-900/70 rounded-xl px-3 py-2">
-          {errorMsg}
-        </p>
-      )}
+      <label className="block text-sm">
+        Upload billeder (3–6)
+        <input
+          type="file"
+          name="images"
+          multiple
+          accept="image/*"
+          style={{ fontSize: 16 }}
+          className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2"
+          onChange={(e) => {
+            const files = Array.from(e.target.files || []);
+            setImages(files.slice(0, 6));
+          }}
+        />
+      </label>
 
       <button
+        disabled={loading}
         type="submit"
-        disabled={isSubmitting}
-        className="mt-2 w-full rounded-2xl bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] px-5 py-2.5 text-sm font-semibold text-slate-950 dd-glow-cta disabled:opacity-60 disabled:cursor-not-allowed"
+        className="mt-4 w-full rounded-2xl bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] px-5 py-2.5 text-sm font-semibold text-slate-950 dd-glow-cta"
       >
-        {isSubmitting ? "Kører AI-scan..." : "Kør AI-scan og prisestimat"}
+        {loading ? "Uploader…" : "Kør AI-scan og prisestimat"}
       </button>
     </form>
   );
