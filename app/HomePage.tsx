@@ -3,7 +3,8 @@ import Link from "next/link";
 import styles from "./HomePage.module.css";
 import { listActiveDrops } from "@/lib/drops";
 import { listItemsForDrop } from "@/lib/items";
-import { HeroClickTracker } from "./heroclick";
+import { HeroClickTracker } from "./HeroClickTracker";
+
 
 type HeroItem = {
   id: string;
