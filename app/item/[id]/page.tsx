@@ -108,7 +108,7 @@ export default async function ItemPage({ params }: Props) {
       "Denne vare er allerede røget. Brug kommende drops til at finde lignende pieces.";
   }
 
-  // ---- FOMO / SOCIAL PROOF (dummy-værdier indtil I har rigtige tal) ----
+  // ---- FOMO / SOCIAL PROOF (dummy indtil I har rigtige tal) ----
   const reminderCount = 37;
   const viewerCount = mode === "live" ? 12 : 0;
   const lastSimilarDropSeconds = 18;
@@ -220,145 +220,147 @@ export default async function ItemPage({ params }: Props) {
             </div>
           </section>
 
-          {/* RIGHT COLUMN: COMMAND CENTER + DATA + TRUST + DESCRIPTION */}
-          <section className="space-y-4 lg:space-y-5 lg:sticky lg:top-24">
-            {/* COMMAND CENTER */}
-            <div className="space-y-4 rounded-2xl border border-slate-800 bg-slate-900/90 p-4 lg:p-5">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold text-slate-50">
-                    Drop overview
-                  </p>
-                  <p className="mt-1 text-xs text-slate-400">
-                    Pris, timing og markedsdata for dette drop.
-                  </p>
-                </div>
-                {dropStatusLabel && (
-                  <span
-                    className={
-                      mode === "expired"
-                        ? "rounded-full bg-slate-800 px-3 py-1 text-[11px] text-slate-200"
-                        : "rounded-full bg-amber-400/15 px-3 py-1 text-[11px] text-amber-200"
-                    }
-                  >
-                    {dropStatusLabel}
-                  </span>
-                )}
-              </div>
-
-              <div className="flex items-end justify-between gap-4">
-                <div>
-                  <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-slate-400">
-                    {priceTitle}
-                  </p>
-                  <p className="mt-1 text-2xl font-semibold text-slate-50">
-                    {priceLabel}
-                  </p>
-
-                  {marketLabel && (
-                    <p className="mt-1 text-[13px] text-emerald-400">
-                      Markedsværdi: {marketLabel}
+          {/* RIGHT COLUMN */}
+          <section className="space-y-4 lg:space-y-5">
+            {/* STICKY COMMAND CENTER */}
+            <div className="lg:sticky lg:top-24">
+              <div className="space-y-4 rounded-2xl border border-slate-800 bg-slate-900/90 p-4 lg:p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-50">
+                      Drop overview
                     </p>
-                  )}
-                  {pricePositionLabel && (
-                    <p className="mt-1 text-[11px] text-slate-300">
-                      {pricePositionLabel}
+                    <p className="mt-1 text-xs text-slate-400">
+                      Pris, timing og markedsdata for dette drop.
                     </p>
-                  )}
-                </div>
-
-                {/* Desktop: countdown koblet direkte til pris */}
-                <div className="hidden text-right text-xs text-slate-300 lg:block">
-                  <DropHeaderCountdown
-                    mode={mode}
-                    startsAt={drop?.starts_at ?? null}
-                  />
-                </div>
-              </div>
-
-              {/* DESKTOP: primær CTA – mobil styres af sticky bar */}
-              <div className="mt-3 hidden lg:block">
-                {mode === "live" && (
-                  <ItemCtaTracker
-                    eventName="dd_item_cta_click"
-                    label="buy_now_desktop"
-                    itemId={item.id}
-                    dropId={drop?.id ?? null}
-                    mode={mode}
-                  >
-                    <button className="w-full rounded-full bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-950">
-                      {primaryCtaLabel}
-                    </button>
-                  </ItemCtaTracker>
-                )}
-
-                {mode === "upcoming" && (
-                  <ItemCtaTracker
-                    eventName="dd_item_cta_click"
-                    label="reminder_desktop"
-                    itemId={item.id}
-                    dropId={drop?.id ?? null}
-                    mode={mode}
-                  >
-                    <div className="w-full">
-                      <UpcomingReminder itemId={item.id} />
-                    </div>
-                  </ItemCtaTracker>
-                )}
-
-                {mode === "expired" && (
-                  <ItemCtaTracker
-                    eventName="dd_item_cta_click"
-                    label="see_upcoming_drops_desktop"
-                    itemId={item.id}
-                    dropId={drop?.id ?? null}
-                    mode={mode}
-                  >
-                    <Link
-                      href="/drops"
-                      className="block w-full rounded-full border border-slate-600 bg-slate-900/90 px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-100"
+                  </div>
+                  {dropStatusLabel && (
+                    <span
+                      className={
+                        mode === "expired"
+                          ? "rounded-full bg-slate-800 px-3 py-1 text-[11px] text-slate-200"
+                          : "rounded-full bg-amber-400/15 px-3 py-1 text-[11px] text-amber-200"
+                      }
                     >
-                      {primaryCtaLabel}
-                    </Link>
-                  </ItemCtaTracker>
-                )}
-
-                {/* FOMO-lag lige under CTA */}
-                <div className="mt-3 space-y-1 text-[11px] text-slate-300">
-                  {mode === "upcoming" && (
-                    <>
-                      <p>
-                        🔥 {reminderCount}+ har allerede sat reminder på dette
-                        drop.
-                      </p>
-                      <p>
-                        ⚡ Sidst et lignende piece droppede, røg det på{" "}
-                        {lastSimilarDropSeconds} sekunder.
-                      </p>
-                    </>
-                  )}
-                  {mode === "live" && (
-                    <>
-                      {viewerCount > 0 && (
-                        <p>👀 {viewerCount} kigger på varen lige nu.</p>
-                      )}
-                      <p>
-                        ⚡ Én session ad gangen. Når du trykker “Køb nu”, lukker
-                        vi for alle andre.
-                      </p>
-                    </>
+                      {dropStatusLabel}
+                    </span>
                   )}
                 </div>
 
-                {/* Forklaring + trust */}
-                <p className="mt-2 text-[10px] text-slate-400">
-                  {primaryCtaSub}
-                </p>
-                <p className="mt-1 text-[10px] text-slate-500">
-                  Sikker handel via DRIPDROPS: Betaling via sikre udbydere,
-                  pengene frigives først, når varen er på vej, og alle sælgere
-                  ID-verificeres.
-                </p>
+                <div className="flex items-end justify-between gap-4">
+                  <div>
+                    <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-slate-400">
+                      {priceTitle}
+                    </p>
+                    <p className="mt-1 text-2xl font-semibold text-slate-50">
+                      {priceLabel}
+                    </p>
+
+                    {marketLabel && (
+                      <p className="mt-1 text-[13px] text-emerald-400">
+                        Markedsværdi: {marketLabel}
+                      </p>
+                    )}
+                    {pricePositionLabel && (
+                      <p className="mt-1 text-[11px] text-slate-300">
+                        {pricePositionLabel}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Desktop: countdown koblet direkte til pris */}
+                  <div className="hidden text-right text-xs text-slate-300 lg:block">
+                    <DropHeaderCountdown
+                      mode={mode}
+                      startsAt={drop?.starts_at ?? null}
+                    />
+                  </div>
+                </div>
+
+                {/* DESKTOP: primær CTA – mobil styres af sticky bar */}
+                <div className="mt-3 hidden lg:block">
+                  {mode === "live" && (
+                    <ItemCtaTracker
+                      eventName="dd_item_cta_click"
+                      label="buy_now_desktop"
+                      itemId={item.id}
+                      dropId={drop?.id ?? null}
+                      mode={mode}
+                    >
+                      <button className="w-full rounded-full bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-950">
+                        {primaryCtaLabel}
+                      </button>
+                    </ItemCtaTracker>
+                  )}
+
+                  {mode === "upcoming" && (
+                    <ItemCtaTracker
+                      eventName="dd_item_cta_click"
+                      label="reminder_desktop"
+                      itemId={item.id}
+                      dropId={drop?.id ?? null}
+                      mode={mode}
+                    >
+                      <div className="w-full">
+                        <UpcomingReminder itemId={item.id} />
+                      </div>
+                    </ItemCtaTracker>
+                  )}
+
+                  {mode === "expired" && (
+                    <ItemCtaTracker
+                      eventName="dd_item_cta_click"
+                      label="see_upcoming_drops_desktop"
+                      itemId={item.id}
+                      dropId={drop?.id ?? null}
+                      mode={mode}
+                    >
+                      <Link
+                        href="/drops"
+                        className="block w-full rounded-full border border-slate-600 bg-slate-900/90 px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-100"
+                      >
+                        {primaryCtaLabel}
+                      </Link>
+                    </ItemCtaTracker>
+                  )}
+
+                  {/* FOMO-lag lige under CTA */}
+                  <div className="mt-3 space-y-1 text-[11px] text-slate-300">
+                    {mode === "upcoming" && (
+                      <>
+                        <p>
+                          🔥 {reminderCount}+ har allerede sat reminder på dette
+                          drop.
+                        </p>
+                        <p>
+                          ⚡ Sidst et lignende piece droppede, røg det på{" "}
+                          {lastSimilarDropSeconds} sekunder.
+                        </p>
+                      </>
+                    )}
+                    {mode === "live" && (
+                      <>
+                        {viewerCount > 0 && (
+                          <p>👀 {viewerCount} kigger på varen lige nu.</p>
+                        )}
+                        <p>
+                          ⚡ Én session ad gangen. Når du trykker “Køb nu”,
+                          lukker vi for alle andre.
+                        </p>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Forklaring + trust */}
+                  <p className="mt-2 text-[10px] text-slate-400">
+                    {primaryCtaSub}
+                  </p>
+                  <p className="mt-1 text-[10px] text-slate-500">
+                    Sikker handel via DRIPDROPS: Betaling via sikre udbydere,
+                    pengene frigives først, når varen er på vej, og alle sælgere
+                    ID-verificeres.
+                  </p>
+                </div>
               </div>
             </div>
 
