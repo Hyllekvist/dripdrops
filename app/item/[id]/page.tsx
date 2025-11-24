@@ -9,6 +9,7 @@ import { DropHeaderCountdown } from "@/components/DropHeaderCountdown";
 import { ItemMobileStickyCta } from "@/components/ItemMobileStickyCta";
 import { ItemTrackingClient } from "./ItemTrackingClient";
 import { ItemCtaTracker } from "./ItemCtaTracker";
+import { ItemDesktopTopBarCta } from "./ItemDesktopTopBarCta";
 
 type Props = { params: { id: string } };
 
@@ -28,7 +29,6 @@ export default async function ItemPage({ params }: Props) {
 
   const drop = item.dropId ? await getDropById(item.dropId) : null;
 
-  // ---- STATE: live / upcoming / expired -----------------------------------
   type DropMode = "live" | "upcoming" | "expired";
   let mode: DropMode = "live";
 
@@ -108,21 +108,19 @@ export default async function ItemPage({ params }: Props) {
       "Denne vare er allerede røget. Brug kommende drops til at finde lignende pieces.";
   }
 
-  // ---- FOMO / SOCIAL PROOF (dummy indtil I har rigtige tal) ----
+  // FOMO dummy (stadig ok for nu)
   const reminderCount = 37;
   const viewerCount = mode === "live" ? 12 : 0;
   const lastSimilarDropSeconds = 18;
 
   return (
     <>
-      {/* Tracking – ingen UI */}
       <ItemTrackingClient
         itemId={item.id}
         dropId={drop?.id ?? null}
         mode={mode}
       />
 
-      {/* Analytics-hook – ingen UI */}
       <ItemAnalyticsShell
         itemId={item.id}
         ai={item.aiAuthenticity}
@@ -130,7 +128,7 @@ export default async function ItemPage({ params }: Props) {
       />
 
       <div className="mx-auto max-w-5xl px-4 pb-28 pt-4 lg:pb-16 lg:pt-8">
-        {/* TOP BADGES */}
+        {/* badges */}
         <div className="mb-4 flex items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full border border-fuchsia-500/60 bg-fuchsia-500/10 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-fuchsia-100">
@@ -164,12 +162,11 @@ export default async function ItemPage({ params }: Props) {
           )}
         </div>
 
-        {/* MAIN GRID */}
+        {/* main grid */}
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-start">
-          {/* HERO / VISUAL */}
+          {/* venstre: hero */}
           <section className="space-y-4">
             <div className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-950 text-slate-50 shadow-[0_20px_60px_rgba(15,23,42,0.55)]">
-              {/* Billede */}
               <div className="relative aspect-[4/3] sm:aspect-[4/3]">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,#020617,#000000_70%)]" />
                 <div className="relative z-10 flex h-full w-full items-center justify-center">
@@ -179,7 +176,6 @@ export default async function ItemPage({ params }: Props) {
                 </div>
               </div>
 
-              {/* Basic info + mobil-countdown */}
               <div className="border-t border-slate-900 px-4 py-4 text-sm">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
@@ -208,7 +204,6 @@ export default async function ItemPage({ params }: Props) {
                     )}
                   </div>
 
-                  {/* MOBIL: countdown tæt på produktet */}
                   <div className="text-right text-[11px] text-slate-300 lg:hidden">
                     <DropHeaderCountdown
                       mode={mode}
@@ -220,151 +215,149 @@ export default async function ItemPage({ params }: Props) {
             </div>
           </section>
 
-          {/* RIGHT COLUMN */}
+          {/* højre kolonne */}
           <section className="space-y-4 lg:space-y-5">
-            {/* STICKY COMMAND CENTER */}
-            <div className="lg:sticky lg:top-24">
-              <div className="space-y-4 rounded-2xl border border-slate-800 bg-slate-900/90 p-4 lg:p-5">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-50">
-                      Drop overview
+            {/* COMMAND CENTER (anchor for topbar) */}
+            <div
+              id="item-command-center"
+              className="space-y-4 rounded-2xl border border-slate-800 bg-slate-900/90 p-4 lg:p-5"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-slate-50">
+                    Drop overview
+                  </p>
+                  <p className="mt-1 text-xs text-slate-400">
+                    Pris, timing og markedsdata for dette drop.
+                  </p>
+                </div>
+                {dropStatusLabel && (
+                  <span
+                    className={
+                      mode === "expired"
+                        ? "rounded-full bg-slate-800 px-3 py-1 text-[11px] text-slate-200"
+                        : "rounded-full bg-amber-400/15 px-3 py-1 text-[11px] text-amber-200"
+                    }
+                  >
+                    {dropStatusLabel}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-end justify-between gap-4">
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-slate-400">
+                    {priceTitle}
+                  </p>
+                  <p className="mt-1 text-2xl font-semibold text-slate-50">
+                    {priceLabel}
+                  </p>
+
+                  {marketLabel && (
+                    <p className="mt-1 text-[13px] text-emerald-400">
+                      Markedsværdi: {marketLabel}
                     </p>
-                    <p className="mt-1 text-xs text-slate-400">
-                      Pris, timing og markedsdata for dette drop.
+                  )}
+                  {pricePositionLabel && (
+                    <p className="mt-1 text-[11px] text-slate-300">
+                      {pricePositionLabel}
                     </p>
-                  </div>
-                  {dropStatusLabel && (
-                    <span
-                      className={
-                        mode === "expired"
-                          ? "rounded-full bg-slate-800 px-3 py-1 text-[11px] text-slate-200"
-                          : "rounded-full bg-amber-400/15 px-3 py-1 text-[11px] text-amber-200"
-                      }
-                    >
-                      {dropStatusLabel}
-                    </span>
                   )}
                 </div>
 
-                <div className="flex items-end justify-between gap-4">
-                  <div>
-                    <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-slate-400">
-                      {priceTitle}
-                    </p>
-                    <p className="mt-1 text-2xl font-semibold text-slate-50">
-                      {priceLabel}
-                    </p>
-
-                    {marketLabel && (
-                      <p className="mt-1 text-[13px] text-emerald-400">
-                        Markedsværdi: {marketLabel}
-                      </p>
-                    )}
-                    {pricePositionLabel && (
-                      <p className="mt-1 text-[11px] text-slate-300">
-                        {pricePositionLabel}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Desktop: countdown koblet direkte til pris */}
-                  <div className="hidden text-right text-xs text-slate-300 lg:block">
-                    <DropHeaderCountdown
-                      mode={mode}
-                      startsAt={drop?.starts_at ?? null}
-                    />
-                  </div>
+                <div className="hidden text-right text-xs text-slate-300 lg:block">
+                  <DropHeaderCountdown
+                    mode={mode}
+                    startsAt={drop?.starts_at ?? null}
+                  />
                 </div>
+              </div>
 
-                {/* DESKTOP: primær CTA – mobil styres af sticky bar */}
-                <div className="mt-3 hidden lg:block">
-                  {mode === "live" && (
-                    <ItemCtaTracker
-                      eventName="dd_item_cta_click"
-                      label="buy_now_desktop"
-                      itemId={item.id}
-                      dropId={drop?.id ?? null}
-                      mode={mode}
+              {/* desktop CTA */}
+              <div className="mt-3 hidden lg:block">
+                {mode === "live" && (
+                  <ItemCtaTracker
+                    eventName="dd_item_cta_click"
+                    label="buy_now_desktop"
+                    itemId={item.id}
+                    dropId={drop?.id ?? null}
+                    mode={mode}
+                  >
+                    <button className="w-full rounded-full bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-950">
+                      {primaryCtaLabel}
+                    </button>
+                  </ItemCtaTracker>
+                )}
+
+                {mode === "upcoming" && (
+                  <ItemCtaTracker
+                    eventName="dd_item_cta_click"
+                    label="reminder_desktop"
+                    itemId={item.id}
+                    dropId={drop?.id ?? null}
+                    mode={mode}
+                  >
+                    <div className="w-full">
+                      <UpcomingReminder itemId={item.id} />
+                    </div>
+                  </ItemCtaTracker>
+                )}
+
+                {mode === "expired" && (
+                  <ItemCtaTracker
+                    eventName="dd_item_cta_click"
+                    label="see_upcoming_drops_desktop"
+                    itemId={item.id}
+                    dropId={drop?.id ?? null}
+                    mode={mode}
+                  >
+                    <Link
+                      href="/drops"
+                      className="block w-full rounded-full border border-slate-600 bg-slate-900/90 px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-100"
                     >
-                      <button className="w-full rounded-full bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-950">
-                        {primaryCtaLabel}
-                      </button>
-                    </ItemCtaTracker>
-                  )}
+                      {primaryCtaLabel}
+                    </Link>
+                  </ItemCtaTracker>
+                )}
 
+                <div className="mt-3 space-y-1 text-[11px] text-slate-300">
                   {mode === "upcoming" && (
-                    <ItemCtaTracker
-                      eventName="dd_item_cta_click"
-                      label="reminder_desktop"
-                      itemId={item.id}
-                      dropId={drop?.id ?? null}
-                      mode={mode}
-                    >
-                      <div className="w-full">
-                        <UpcomingReminder itemId={item.id} />
-                      </div>
-                    </ItemCtaTracker>
+                    <>
+                      <p>
+                        🔥 {reminderCount}+ har allerede sat reminder på dette
+                        drop.
+                      </p>
+                      <p>
+                        ⚡ Sidst et lignende piece droppede, røg det på{" "}
+                        {lastSimilarDropSeconds} sekunder.
+                      </p>
+                    </>
                   )}
-
-                  {mode === "expired" && (
-                    <ItemCtaTracker
-                      eventName="dd_item_cta_click"
-                      label="see_upcoming_drops_desktop"
-                      itemId={item.id}
-                      dropId={drop?.id ?? null}
-                      mode={mode}
-                    >
-                      <Link
-                        href="/drops"
-                        className="block w-full rounded-full border border-slate-600 bg-slate-900/90 px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-100"
-                      >
-                        {primaryCtaLabel}
-                      </Link>
-                    </ItemCtaTracker>
+                  {mode === "live" && (
+                    <>
+                      {viewerCount > 0 && (
+                        <p>👀 {viewerCount} kigger på varen lige nu.</p>
+                      )}
+                      <p>
+                        ⚡ Én session ad gangen. Når du trykker “Køb nu”, lukker
+                        vi for alle andre.
+                      </p>
+                    </>
                   )}
-
-                  {/* FOMO-lag lige under CTA */}
-                  <div className="mt-3 space-y-1 text-[11px] text-slate-300">
-                    {mode === "upcoming" && (
-                      <>
-                        <p>
-                          🔥 {reminderCount}+ har allerede sat reminder på dette
-                          drop.
-                        </p>
-                        <p>
-                          ⚡ Sidst et lignende piece droppede, røg det på{" "}
-                          {lastSimilarDropSeconds} sekunder.
-                        </p>
-                      </>
-                    )}
-                    {mode === "live" && (
-                      <>
-                        {viewerCount > 0 && (
-                          <p>👀 {viewerCount} kigger på varen lige nu.</p>
-                        )}
-                        <p>
-                          ⚡ Én session ad gangen. Når du trykker “Køb nu”,
-                          lukker vi for alle andre.
-                        </p>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Forklaring + trust */}
-                  <p className="mt-2 text-[10px] text-slate-400">
-                    {primaryCtaSub}
-                  </p>
-                  <p className="mt-1 text-[10px] text-slate-500">
-                    Sikker handel via DRIPDROPS: Betaling via sikre udbydere,
-                    pengene frigives først, når varen er på vej, og alle sælgere
-                    ID-verificeres.
-                  </p>
                 </div>
+
+                <p className="mt-2 text-[10px] text-slate-400">
+                  {primaryCtaSub}
+                </p>
+                <p className="mt-1 text-[10px] text-slate-500">
+                  Sikker handel via DRIPDROPS: Betaling via sikre udbydere,
+                  pengene frigives først, når varen er på vej, og alle sælgere
+                  ID-verificeres.
+                </p>
               </div>
             </div>
 
-            {/* DRIP DATA – enkel markedsviden */}
+            {/* Drip Data */}
             <div className="space-y-3 rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-sm font-semibold text-slate-50">Drip Data</p>
@@ -372,7 +365,6 @@ export default async function ItemPage({ params }: Props) {
                   Markedsindsigt
                 </span>
               </div>
-
               <div className="mt-2 grid grid-cols-2 gap-4 text-sm text-slate-100">
                 <div>
                   <p className="text-[11px] text-slate-400">Markedsværdi</p>
@@ -387,14 +379,13 @@ export default async function ItemPage({ params }: Props) {
                   </p>
                 </div>
               </div>
-
               <p className="text-[11px] text-slate-500">
                 Kilde: Offentlige salgsdata (StockX, GOAT m.fl.) kombineret med
                 Drip AI™ vurdering.
               </p>
             </div>
 
-            {/* DRIP AI™ AUTHENTICITY */}
+            {/* AI authenticity */}
             <div className="space-y-3 rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
               <div className="flex items-center justify-between gap-2">
                 <div>
@@ -416,7 +407,6 @@ export default async function ItemPage({ params }: Props) {
                   style={{ width: `${item.aiAuthenticity}%` }}
                 />
               </div>
-
               {pricePositionLabel && (
                 <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-slate-100">
                   <span className="rounded-full bg-slate-950 px-3 py-1">
@@ -432,7 +422,7 @@ export default async function ItemPage({ params }: Props) {
               )}
             </div>
 
-            {/* HOW IT WORKS */}
+            {/* How it works */}
             <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
               <p className="text-sm font-semibold text-slate-50">
                 Sådan fungerer et DripDrop
@@ -460,7 +450,7 @@ export default async function ItemPage({ params }: Props) {
               )}
             </div>
 
-            {/* DESCRIPTION */}
+            {/* Description */}
             <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
               <p className="text-sm font-semibold text-slate-50">Beskrivelse</p>
               <p className="whitespace-pre-line text-[13px] leading-relaxed text-slate-200">
@@ -472,7 +462,20 @@ export default async function ItemPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Sticky CTA – mobil */}
+      {/* DESKTOP topbar CTA når main-cta er scrollet væk */}
+      <ItemDesktopTopBarCta
+        anchorId="item-command-center"
+        mode={mode}
+        priceTitle={priceTitle}
+        priceLabel={priceLabel}
+        marketLabel={marketLabel}
+        primaryCtaLabel={primaryCtaLabel}
+        itemId={item.id}
+        dropId={drop?.id ?? null}
+        startsAt={drop?.starts_at ?? null}
+      />
+
+      {/* Mobil sticky CTA */}
       <ItemCtaTracker
         eventName="dd_item_cta_click"
         label="sticky_cta_mobile"
