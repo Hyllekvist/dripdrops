@@ -83,6 +83,7 @@ export default async function AdminSellDetailPage({ params }: Props) {
             <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
               Status
             </div>
+            <AdminSellDetailActions id={s.id} status={s.status} showStatusPill />
          
           </div>
 
