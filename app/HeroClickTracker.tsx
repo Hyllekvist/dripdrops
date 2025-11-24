@@ -1,24 +1,21 @@
 // app/HeroClickTracker.tsx
 "use client";
 
+import type { ReactNode } from "react";
 import { trackEvent } from "../lib/gtag";
 
 type Props = {
   itemId: string;
-  children: React.ReactNode;
+  children: ReactNode;
 };
 
 export function HeroClickTracker({ itemId, children }: Props) {
-  return (
-    <div
-      onClick={() =>
-        trackEvent("dd_hero_click", {
-          item_id: itemId,
-          position: "mobile_hero",
-        })
-      }
-    >
-      {children}
-    </div>
-  );
+  const handleClick = () => {
+    trackEvent("dd_hero_click", {
+      item_id: itemId,
+      position: "mobile_hero",
+    });
+  };
+
+  return <div onClick={handleClick}>{children}</div>;
 }
