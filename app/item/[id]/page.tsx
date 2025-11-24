@@ -81,18 +81,18 @@ export default async function ItemPage({ params }: Props) {
   if (mode === "live") {
     primaryCtaLabel = "Køb nu – reserver i 2:00";
     primaryCtaSub =
-      "Du reserverer varen i 2 minutter. Betaling sker først i næste step.";
+      "Tryk “Køb nu” for at reservere varen i 2 minutter. Hvis du ikke betaler i tide, går den videre til næste køber.";
     priceTitle = "Pris";
   } else if (mode === "upcoming") {
     primaryCtaLabel = "Få reminder når droppet åbner";
     primaryCtaSub = drop?.startsAtLabel
-      ? `Dropper ${drop.startsAtLabel}. Vi giver besked, når det går live.`
-      : "Dropper snart – få besked, når det åbner.";
+      ? `Vi sender kun en mail, når droppet åbner – ingen spam. Dropper ${drop.startsAtLabel}.`
+      : "Vi sender kun en mail, når droppet åbner – ingen spam.";
     priceTitle = "Forventet pris i droppet";
   } else {
     primaryCtaLabel = "Se kommende drops";
     primaryCtaSub =
-      "Denne vare blev solgt i et tidligere drop. Hold øje med lignende i kommende drops.";
+      "Denne vare er allerede røget. Følg kommende drops for lignende pieces.";
     priceTitle = "Solgt for";
   }
 
@@ -107,6 +107,11 @@ export default async function ItemPage({ params }: Props) {
     scarcityFooter =
       "Denne vare er allerede røget. Brug kommende drops til at finde lignende pieces.";
   }
+
+  // ---- FOMO / SOCIAL PROOF (dummy-værdier indtil I har rigtige tal) ----
+  const reminderCount = 37;
+  const viewerCount = mode === "live" ? 12 : 0;
+  const lastSimilarDropSeconds = 18;
 
   return (
     <>
@@ -318,8 +323,41 @@ export default async function ItemPage({ params }: Props) {
                   </ItemCtaTracker>
                 )}
 
+                {/* FOMO-lag lige under CTA */}
+                <div className="mt-3 space-y-1 text-[11px] text-slate-300">
+                  {mode === "upcoming" && (
+                    <>
+                      <p>
+                        🔥 {reminderCount}+ har allerede sat reminder på dette
+                        drop.
+                      </p>
+                      <p>
+                        ⚡ Sidst et lignende piece droppede, røg det på{" "}
+                        {lastSimilarDropSeconds} sekunder.
+                      </p>
+                    </>
+                  )}
+                  {mode === "live" && (
+                    <>
+                      {viewerCount > 0 && (
+                        <p>👀 {viewerCount} kigger på varen lige nu.</p>
+                      )}
+                      <p>
+                        ⚡ Én session ad gangen. Når du trykker “Køb nu”, lukker
+                        vi for alle andre.
+                      </p>
+                    </>
+                  )}
+                </div>
+
+                {/* Forklaring + trust */}
                 <p className="mt-2 text-[10px] text-slate-400">
                   {primaryCtaSub}
+                </p>
+                <p className="mt-1 text-[10px] text-slate-500">
+                  Sikker handel via DRIPDROPS: Betaling via sikre udbydere,
+                  pengene frigives først, når varen er på vej, og alle sælgere
+                  ID-verificeres.
                 </p>
               </div>
             </div>
@@ -400,8 +438,8 @@ export default async function ItemPage({ params }: Props) {
               {mode === "live" && (
                 <p className="text-[13px] leading-relaxed text-slate-200">
                   1) Tryk “Køb nu” → 2) Varen reserveres i 2 minutter → 3) Du
-                  gennemfører betaling → 4) Sælger sender varen. Én session ad
-                  gangen – ingen uendelig scroll.
+                  gennemfører betaling → 4) Sælger sender varen. Ét køb ad
+                  gangen – ingen uendelig kamp om knappen.
                 </p>
               )}
               {mode === "upcoming" && (
