@@ -8,34 +8,33 @@ const supabase = createClient(
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const id = body?.id as string | undefined;
+    const { id } = await req.json();
 
     if (!id) {
-      return NextResponse.json({ error: "Missing id" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Mangler id" },
+        { status: 400 }
+      );
     }
 
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("sell_submissions")
       .update({ status: "approved" })
-      .eq("id", id)
-      .select("id, status")
-      .single();
+      .eq("id", id);
 
     if (error) {
-      console.error("Supabase approve error:", error);
-      return NextResponse.json({ error: "Supabase error" }, { status: 500 });
+      console.error("Approve error:", error);
+      return NextResponse.json(
+        { error: error.message },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json({
-      ok: true,
-      id: data.id,
-      newStatus: data.status,
-    });
-  } catch (err) {
-    console.error("Approve route error:", err);
+    return NextResponse.json({ newStatus: "approved" });
+  } catch (err: any) {
+    console.error("Approve exception:", err);
     return NextResponse.json(
-      { error: "Server error in approve" },
+      { error: "Serverfejl i approve-endpoint" },
       { status: 500 }
     );
   }
