@@ -27,57 +27,87 @@ export default async function HomePage() {
       <section className={styles.hero}>
         <div className={styles.heroContent}>
           {/* MOBILE HERO PRODUCT – stage card over titel */}
-          {heroItem && (
-            <div className="mb-6 block rounded-3xl border border-slate-800 bg-slate-100/90 p-4 shadow-[0_18px_40px_rgba(15,23,42,0.65)] dark:bg-slate-900/90 lg:hidden">
-              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-slate-800">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,#0f172a,#020617_70%)] opacity-70 dark:bg-[radial-gradient(circle_at_center,#020617,#000000_75%)]" />
-                <div className="relative z-10 flex h-full w-full items-center justify-center text-xs text-slate-200">
-                  Produktbillede kommer her
-                </div>
-              </div>
+{heroItem && (
+  <Link
+    href={`/item/${heroItem.id}`}
+    className="mb-6 block lg:hidden"
+  >
+    <article className="group relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-950/95 shadow-[0_22px_60px_rgba(0,0,0,0.65)]">
+      {/* top-label */}
+      <div className="flex items-center justify-between px-4 pt-4 text-[11px] text-slate-400">
+        <span className="inline-flex items-center gap-2">
+          <span className="rounded-full bg-slate-900/80 px-2.5 py-1 uppercase tracking-[0.18em]">
+            Stage item
+          </span>
+          <span className="hidden xs:inline-flex items-center gap-1 text-emerald-400">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            {nextDrop?.isLive ? "Live drop" : "Udvalgt til næste drop"}
+          </span>
+        </span>
+        <span className="text-xs text-slate-500">
+          DROP #{nextDrop?.sequence ?? 27}
+        </span>
+      </div>
 
-              <div className="mt-4 flex items-start justify-between gap-3">
-                <div>
-                  {heroItem.designer && (
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                      {heroItem.designer}
-                    </p>
-                  )}
-                  <p className="text-lg font-semibold text-slate-900 dark:text-slate-50">
-                    {heroItem.title}
-                  </p>
-                  {heroItem.brand && (
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                      {heroItem.brand}
-                    </p>
-                  )}
-                  <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                    1/1 – ingen restock
-                  </p>
-                </div>
+      {/* image area */}
+      <div className="relative mt-3 px-4">
+        <div className="overflow-hidden rounded-2xl border border-slate-800 bg-[radial-gradient(circle_at_top,#1f2937,#020617_70%)]">
+          <div className="flex aspect-[4/3] items-center justify-center text-[11px] text-slate-400">
+            Produktbillede kommer her
+          </div>
+        </div>
+      </div>
 
-                <div className="text-right">
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                    Pris
-                  </p>
-                  <p className="text-lg font-semibold text-slate-900 dark:text-slate-50">
-                    {heroItem.price.toLocaleString("da-DK")} kr
-                  </p>
-                  <p className="mt-1 flex items-center justify-end gap-1 text-[11px] text-emerald-500">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    {nextDrop?.isLive ? "Live drop" : "Udvalgt item"}
-                  </p>
-                </div>
-              </div>
+      {/* meta + price */}
+      <div className="px-4 pb-4 pt-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            {heroItem.designer && (
+              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                {heroItem.designer}
+              </p>
+            )}
+            <p className="mt-1 text-lg font-semibold text-slate-50">
+              {heroItem.title}
+            </p>
+            {heroItem.brand && (
+              <p className="text-sm text-slate-400">{heroItem.brand}</p>
+            )}
+            <p className="mt-1 text-[11px] text-slate-500">
+              1/1 – ingen restock
+            </p>
+          </div>
 
-              <Link
-                href={`/item/${heroItem.id}`}
-                className="mt-4 block w-full rounded-full bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] px-4 py-3 text-center text-[12px] font-semibold uppercase tracking-[0.16em] text-slate-950"
-              >
-                Se varen
-              </Link>
+          <div className="text-right">
+            <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
+              Pris
+            </p>
+            <p className="mt-1 text-lg font-semibold text-slate-50">
+              {heroItem.price.toLocaleString("da-DK")} kr
+            </p>
+          </div>
+        </div>
+
+        {/* CTA row */}
+        <div className="mt-4 flex items-center justify-between gap-3">
+          <p className="text-[11px] text-slate-500">
+            Tryk for at se hele droppet.
+          </p>
+          <div className="rounded-full bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] p-[1px]">
+            <div className="rounded-full bg-slate-950 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-50">
+              Se varen
             </div>
-          )}
+          </div>
+        </div>
+      </div>
+
+      {/* subtle hover glow */}
+      <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+        <div className="absolute -inset-40 bg-[radial-gradient(circle_at_top,#22d3ee33,transparent_60%)]" />
+      </div>
+    </article>
+  </Link>
+)}
 
           {/* DROP PILL */}
           <div className={styles.dropPill}>
