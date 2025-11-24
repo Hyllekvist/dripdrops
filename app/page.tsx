@@ -1,3 +1,4 @@
+// app/(site)/HomePage.tsx eller hvor din fil ligger
 import Link from "next/link";
 import styles from "./HomePage.module.css";
 import { listActiveDrops } from "@/lib/drops";
@@ -5,7 +6,7 @@ import { listItemsForDrop } from "@/lib/items";
 
 export default async function HomePage() {
   const drops = await listActiveDrops();
-  const nextDrop = drops[0];
+  const nextDrop = drops[0] ?? null;
 
   let heroItem: any = null;
 
@@ -22,92 +23,97 @@ export default async function HomePage() {
       : "Næste drop klar"
     : "Næste drop klar";
 
+  const countdownLabel = nextDrop?.startsAtLabel ?? "Snart";
+
   return (
     <div className={styles.wrapper}>
       <section className={styles.hero}>
         <div className={styles.heroContent}>
-          {/* MOBILE HERO PRODUCT – stage card over titel */}
-{heroItem && (
-  <Link
-    href={`/item/${heroItem.id}`}
-    className="mb-6 block lg:hidden"
-  >
-    <article className="group relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-950/95 shadow-[0_22px_60px_rgba(0,0,0,0.65)]">
-      {/* top-label */}
-      <div className="flex items-center justify-between px-4 pt-4 text-[11px] text-slate-400">
-        <span className="inline-flex items-center gap-2">
-          <span className="rounded-full bg-slate-900/80 px-2.5 py-1 uppercase tracking-[0.18em]">
-            Stage item
-          </span>
-          <span className="hidden xs:inline-flex items-center gap-1 text-emerald-400">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            {nextDrop?.isLive ? "Live drop" : "Udvalgt til næste drop"}
-          </span>
-        </span>
-        <span className="text-xs text-slate-500">
-          DROP #{nextDrop?.sequence ?? 27}
-        </span>
-      </div>
+          {/* HYPE HERO – kun mobil */}
+          {heroItem && (
+            <Link
+              href={`/item/${heroItem.id}`}
+              className="mb-8 block lg:hidden"
+            >
+              <article className="relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-950 shadow-[0_22px_60px_rgba(0,0,0,0.75)]">
+                {/* animated bg */}
+                <div className="pointer-events-none absolute inset-0 animate-pulse-slow bg-[radial-gradient(circle_at_20%_0%,rgba(255,92,222,0.22),transparent_60%),radial-gradient(circle_at_80%_100%,rgba(0,240,255,0.22),transparent_55%)]" />
 
-      {/* image area */}
-      <div className="relative mt-3 px-4">
-        <div className="overflow-hidden rounded-2xl border border-slate-800 bg-[radial-gradient(circle_at_top,#1f2937,#020617_70%)]">
-          <div className="flex aspect-[4/3] items-center justify-center text-[11px] text-slate-400">
-            Produktbillede kommer her
-          </div>
-        </div>
-      </div>
+                <div className="relative z-10 px-5 py-5">
+                  {/* top row */}
+                  <div className="mb-4 flex items-center justify-between text-[11px] text-slate-200">
+                    <div className="inline-flex items-center gap-2">
+                      <span className="rounded-full bg-slate-950/80 px-3 py-1 uppercase tracking-[0.18em]">
+                        Stage item
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-emerald-300">
+                        <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                        {nextDrop?.isLive ? "Live drop" : "Udvalgt til næste drop"}
+                      </span>
+                    </div>
+                    <span className="text-xs text-slate-400">
+                      DROP #{nextDrop?.sequence ?? 27}
+                    </span>
+                  </div>
 
-      {/* meta + price */}
-      <div className="px-4 pb-4 pt-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            {heroItem.designer && (
-              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
-                {heroItem.designer}
-              </p>
-            )}
-            <p className="mt-1 text-lg font-semibold text-slate-50">
-              {heroItem.title}
-            </p>
-            {heroItem.brand && (
-              <p className="text-sm text-slate-400">{heroItem.brand}</p>
-            )}
-            <p className="mt-1 text-[11px] text-slate-500">
-              1/1 – ingen restock
-            </p>
-          </div>
+                  {/* image */}
+                  <div className="mb-5 overflow-hidden rounded-2xl border border-white/10 bg-[radial-gradient(circle_at_top,#1f2937,#020617_70%)]">
+                    <div className="flex aspect-[4/3] items-center justify-center text-[11px] text-slate-300">
+                      Produktbillede kommer her
+                    </div>
+                  </div>
 
-          <div className="text-right">
-            <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
-              Pris
-            </p>
-            <p className="mt-1 text-lg font-semibold text-slate-50">
-              {heroItem.price.toLocaleString("da-DK")} kr
-            </p>
-          </div>
-        </div>
+                  {/* meta + price */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      {heroItem.designer && (
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">
+                          {heroItem.designer}
+                        </p>
+                      )}
+                      <p className="mt-1 text-lg font-semibold text-slate-50">
+                        {heroItem.title}
+                      </p>
+                      {heroItem.brand && (
+                        <p className="text-sm text-slate-400">
+                          {heroItem.brand}
+                        </p>
+                      )}
+                      <p className="mt-1 text-[11px] text-slate-500">
+                        1/1 – ingen restock
+                      </p>
+                      <p className="mt-2 text-[12px] font-medium text-emerald-300">
+                        {nextDrop?.isLive
+                          ? "Live nu – få minutter tilbage"
+                          : `Starter: ${countdownLabel}`}
+                      </p>
+                    </div>
 
-        {/* CTA row */}
-        <div className="mt-4 flex items-center justify-between gap-3">
-          <p className="text-[11px] text-slate-500">
-            Tryk for at se hele droppet.
-          </p>
-          <div className="rounded-full bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] p-[1px]">
-            <div className="rounded-full bg-slate-950 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-50">
-              Se varen
-            </div>
-          </div>
-        </div>
-      </div>
+                    <div className="text-right">
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
+                        Pris
+                      </p>
+                      <p className="mt-1 text-lg font-semibold text-slate-50">
+                        {heroItem.price.toLocaleString("da-DK")} kr
+                      </p>
+                    </div>
+                  </div>
 
-      {/* subtle hover glow */}
-      <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-        <div className="absolute -inset-40 bg-[radial-gradient(circle_at_top,#22d3ee33,transparent_60%)]" />
-      </div>
-    </article>
-  </Link>
-)}
+                  {/* CTA */}
+                  <div className="mt-5 flex items-center justify-between gap-3">
+                    <p className="text-[11px] text-slate-500">
+                      Tap for at åbne droppet.
+                    </p>
+                    <div className="rounded-full bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] p-[1px]">
+                      <div className="rounded-full bg-slate-950 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-50">
+                        Se varen
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            </Link>
+          )}
 
           {/* DROP PILL */}
           <div className={styles.dropPill}>
@@ -137,7 +143,7 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          {/* FEATURE GRID – tilpasset til dark/light via utility classes */}
+          {/* FEATURE GRID */}
           <div className={styles.featureGrid}>
             <div className="dd-gradient-border rounded-2xl bg-slate-100/90 p-4 dark:bg-slate-950/80">
               <p className={styles.featureLabel}>Authenticated by AI</p>
@@ -154,14 +160,14 @@ export default async function HomePage() {
             <div className="dd-gradient-border rounded-2xl bg-slate-100/90 p-4 dark:bg-slate-950/80">
               <p className={styles.featureLabel}>Design & curated fashion</p>
               <p className={styles.featureText}>
-                Fra Spanske Stole til archive streetwear – vi sorterer skraldet
-                fra.
+                Fra Spanske Stole til archive streetwear – vi sorterer
+                skraldet fra.
               </p>
             </div>
           </div>
         </div>
 
-        {/* DESKTOP HERO VISUAL / MOCK CARD (beholder din gamle, kun desktop) */}
+        {/* DESKTOP HERO VISUAL */}
         <div className={styles.heroVisual}>
           <div className={styles.mockCard}>
             <div className={styles.mockHeader}>
@@ -200,9 +206,7 @@ export default async function HomePage() {
                     Se varen
                   </Link>
                 ) : (
-                  <button className={styles.mockCta}>
-                    Køb nu – 1 tilbage
-                  </button>
+                  <button className={styles.mockCta}>Køb nu – 1 tilbage</button>
                 )}
               </div>
             </div>
