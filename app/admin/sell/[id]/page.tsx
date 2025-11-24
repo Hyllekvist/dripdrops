@@ -1,11 +1,10 @@
 // app/admin/sell/[id]/page.tsx
 export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 import { AdminSellDetailActions } from "./AdminSellDetailActions";
-
-
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -23,6 +22,7 @@ type SubmissionDetail = {
   status: string;
   image_count: number;
   image_urls: unknown;
+  item_id: string | null; // ← NY
 };
 
 export const metadata = {
@@ -39,8 +39,8 @@ export default async function AdminSellDetailPage({ params }: Props) {
   const { data, error } = await supabase
     .from("sell_submissions")
     .select(
-      "id, created_at, title, brand, price_idea, email, condition, status, image_count, image_urls"
-    )
+      "id, created_at, title, brand, price_idea, email, condition, status, image_count, image_urls, item_id"
+    ) // ← item_id added
     .eq("id", params.id)
     .single();
 
@@ -64,9 +64,11 @@ export default async function AdminSellDetailPage({ params }: Props) {
           >
             ← Tilbage til submissions
           </Link>
+
           <h1 className="text-xl font-semibold text-slate-50">
             Sell submission
           </h1>
+
           <p className="text-xs text-slate-500">
             Oprettet{" "}
             {new Date(s.created_at).toLocaleString("da-DK", {
@@ -76,13 +78,28 @@ export default async function AdminSellDetailPage({ params }: Props) {
           </p>
         </div>
 
-        <div className="text-right text-xs space-y-1">
-          <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
-            Status
+        <div className="text-right text-xs space-y-2">
+          <div>
+            <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
+              Status
+            </div>
+            <div className="inline-flex rounded-full bg-slate-900 px-3 py-1 text-[11px] text-slate-200">
+              {s.status}
+            </div>
           </div>
-          <div className="inline-flex rounded-full bg-slate-900 px-3 py-1 text-[11px] text-slate-200">
-            {s.status}
-          </div>
+
+          {s.item_id && (
+            <div className="text-[11px] text-emerald-300">
+              Item oprettet →{" "}
+              <Link
+                href={`/item/${s.item_id}`}
+                className="underline hover:text-emerald-200"
+              >
+                Se item
+              </Link>
+            </div>
+          )}
+
           <div className="text-[11px] text-slate-400">{s.email}</div>
         </div>
       </div>
@@ -114,6 +131,7 @@ export default async function AdminSellDetailPage({ params }: Props) {
                   className="h-64 w-full object-cover"
                 />
               </div>
+
               {imageUrls.length > 1 && (
                 <div className="flex flex-wrap gap-2">
                   {imageUrls.slice(1).map((url) => (
@@ -140,6 +158,7 @@ export default async function AdminSellDetailPage({ params }: Props) {
             <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
               Prisidé & kontakt
             </div>
+
             <div className="space-y-1">
               <div className="text-xs text-slate-500">Prisidé</div>
               <div className="text-base text-slate-50">
@@ -148,6 +167,7 @@ export default async function AdminSellDetailPage({ params }: Props) {
                   : "Ikke angivet"}
               </div>
             </div>
+
             <div className="space-y-1">
               <div className="text-xs text-slate-500">Email</div>
               <div className="text-xs text-slate-200">{s.email}</div>
@@ -157,9 +177,8 @@ export default async function AdminSellDetailPage({ params }: Props) {
           <AdminSellDetailActions id={s.id} status={s.status} />
 
           <div className="pt-2 border-t border-slate-800 text-[11px] text-slate-500">
-            Når du godkender, opdaterer vi kun status i <code>sell_submissions</code> i
-            denne version. I næste step kobler vi det sammen med{" "}
-            <code>items</code>-tabellen, så godkendelse kan oprette et rigtigt item.
+            Når du godkender, opretter vi et rigtigt item i{" "}
+            <code>items</code>-tabellen og linker det til denne submission.
           </div>
         </section>
       </div>
