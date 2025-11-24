@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 type LastSell = {
   title: string;
@@ -12,19 +13,25 @@ type LastSell = {
 
 export function SellThanksClient() {
   const [item, setItem] = useState<LastSell | null>(null);
+  const searchParams = useSearchParams();
+
+  // vi bruger ts-queryparam til at tvinge re-read
+  const ts = searchParams.get("ts");
 
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem("dd_last_sell_submission");
-      if (!raw) return;
+      if (!raw) {
+        setItem(null);
+        return;
+      }
       const parsed = JSON.parse(raw) as LastSell;
       setItem(parsed);
     } catch {
-      // ignorer bare
+      setItem(null);
     }
-  }, []);
+  }, [ts]); // <-- vigtig ændring: kør hver gang ts ændrer sig
 
-  // Hvis man går direkte ind på /sell/thanks eller refresher, er der ingen data
   if (!item) return null;
 
   return (
