@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
-
+import { AdminSellDetailActions } from "./AdminSellDetailActions";
 
 export const dynamic = "force-dynamic";
 
