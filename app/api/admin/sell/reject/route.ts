@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -6,13 +6,13 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const { id } = await req.json();
 
-    if (!id) {
+    if (!id || typeof id !== "string") {
       return NextResponse.json(
-        { error: "Mangler id" },
+        { error: "Mangler gyldigt id" },
         { status: 400 }
       );
     }
@@ -23,18 +23,18 @@ export async function POST(req: Request) {
       .eq("id", id);
 
     if (error) {
-      console.error("Reject error:", error);
+      console.error("reject: update-fejl", error);
       return NextResponse.json(
-        { error: error.message },
+        { error: "Kunne ikke opdatere status" },
         { status: 500 }
       );
     }
 
-    return NextResponse.json({ newStatus: "rejected" });
-  } catch (err: any) {
-    console.error("Reject exception:", err);
+    return NextResponse.json({ ok: true, newStatus: "rejected" });
+  } catch (err) {
+    console.error("reject: uventet fejl", err);
     return NextResponse.json(
-      { error: "Serverfejl i reject-endpoint" },
+      { error: "Uventet serverfejl" },
       { status: 500 }
     );
   }
