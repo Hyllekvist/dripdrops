@@ -83,9 +83,7 @@ export default async function AdminSellDetailPage({ params }: Props) {
             <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
               Status
             </div>
-            <div className="inline-flex rounded-full bg-slate-900 px-3 py-1 text-[11px] text-slate-200">
-              {s.status}
-            </div>
+         
           </div>
 
           {s.item_id && (
