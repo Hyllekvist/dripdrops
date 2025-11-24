@@ -27,7 +27,7 @@ export default function SellThanksPage() {
         </div>
       </header>
 
-      {/* Dit item – direkte payoff */}
+      {/* Her kommer preview-kortet */}
       <SellThanksClient />
 
       {/* Hvad der sker nu */}
