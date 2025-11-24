@@ -117,7 +117,7 @@ export default async function ItemPage({ params }: Props) {
       />
 
       <div className="mx-auto max-w-5xl px-4 pb-28 pt-4 lg:pb-16 lg:pt-8">
-        {/* TOP ROW – simple, SNKRS-agtig */}
+        {/* TOP BADGES */}
         <div className="mb-4 flex items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full border border-fuchsia-500/60 bg-fuchsia-500/10 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-fuchsia-100">
@@ -151,14 +151,13 @@ export default async function ItemPage({ params }: Props) {
           )}
         </div>
 
-        {/* MAIN GRID – StockX + SNKRS hybrid */}
+        {/* MAIN GRID */}
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-start">
-          {/* HERO / GALLERY */}
+          {/* HERO / CARD */}
           <section className="space-y-4">
-            {/* SNKRS-style product card: lys flade, stor hero */}
             <div className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-100 text-slate-900 shadow-[0_20px_60px_rgba(15,23,42,0.55)] dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50">
+              {/* Billede */}
               <div className="relative aspect-[4/3] sm:aspect-[4/3]">
-                {/* TODO: byt gradient ud med rigtige billeder, når de er klar */}
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,#0f172a,#020617_65%)] dark:bg-[radial-gradient(circle_at_center,#020617,#000000_70%)]" />
                 <div className="relative z-10 flex h-full w-full items-center justify-center">
                   <span className="rounded-full bg-black/60 px-3 py-1 text-[11px] text-slate-100 backdrop-blur-sm">
@@ -167,14 +166,15 @@ export default async function ItemPage({ params }: Props) {
                 </div>
               </div>
 
-              {/* Under hero: titel + brand i ren SNKRS-stil */}
+              {/* Info + pris + CTA – StockX-style sheet */}
               <div className="border-t border-black/5 px-4 py-4 text-sm dark:border-slate-800">
-                <div className="flex items-baseline justify-between gap-4">
+                <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] items-center gap-4">
+                  {/* Venstre: designer + title + brand */}
                   <div>
                     <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
                       {item.designer}
                     </div>
-                    <h1 className="text-lg font-semibold leading-tight text-slate-900 dark:text-slate-50">
+                    <h1 className="mt-1 text-lg font-semibold leading-tight text-slate-900 dark:text-slate-50">
                       {item.title}
                     </h1>
                     {item.brand && (
@@ -184,18 +184,63 @@ export default async function ItemPage({ params }: Props) {
                     )}
                   </div>
 
-                  {/* Countdown inline – SNKRS “Available at” vibe */}
-                  <div className="text-right text-[11px] text-slate-600 dark:text-slate-400">
-                    <DropHeaderCountdown
-                      mode={mode}
-                      startsAt={drop?.starts_at ?? null}
-                    />
+                  {/* Højre: pris + markedsværdi + CTA (desktop) */}
+                  <div className="text-right text-xs">
+                    <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                      {priceTitle}
+                    </div>
+                    <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-50">
+                      {priceLabel}
+                    </div>
+                    {marketLabel && (
+                      <div className="mt-1 text-[11px] text-emerald-500 dark:text-emerald-300">
+                        Markedsværdi: {marketLabel}
+                      </div>
+                    )}
+                    {pricePositionLabel && (
+                      <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                        {pricePositionLabel}
+                      </div>
+                    )}
+
+                    {/* Primær CTA i kortet – kun desktop, mobil har sticky CTA */}
+                    <div className="mt-3 hidden lg:block">
+                      {mode === "live" && (
+                        <button className="w-full rounded-full bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-950">
+                          {primaryCtaLabel}
+                        </button>
+                      )}
+
+                      {mode === "upcoming" && (
+                        <div className="w-full">
+                          <UpcomingReminder itemId={item.id} />
+                        </div>
+                      )}
+
+                      {mode === "expired" && (
+                        <Link
+                          href="/drops"
+                          className="block w-full rounded-full border border-slate-600 bg-slate-900/90 px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-100"
+                        >
+                          {primaryCtaLabel}
+                        </Link>
+                      )}
+                    </div>
                   </div>
+                </div>
+
+                {/* Countdown + 1/1-info – SNKRS-style lille footer */}
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-600 dark:text-slate-400">
+                  <DropHeaderCountdown
+                    mode={mode}
+                    startsAt={drop?.starts_at ?? null}
+                  />
+                  <span>1/1 – ingen restock</span>
                 </div>
               </div>
             </div>
 
-            {/* Lille meta under hero – kan bruges til views osv. senere */}
+            {/* Meta under kortet */}
             <div className="flex flex-wrap gap-2 text-[11px] text-slate-500">
               {mode === "live" && (
                 <>
@@ -204,7 +249,7 @@ export default async function ItemPage({ params }: Props) {
                     Flere kigger på varen nu
                   </span>
                   <span className="rounded-full bg-slate-900/60 px-3 py-1 text-slate-300">
-                    1/1 – ingen restock
+                    Session-baseret checkout
                   </span>
                 </>
               )}
@@ -214,7 +259,7 @@ export default async function ItemPage({ params }: Props) {
                     Dropper snart – early access via konto
                   </span>
                   <span className="rounded-full bg-slate-900/60 px-3 py-1 text-slate-300">
-                    Gem varen for hurtig adgang
+                    Gem varen og sæt reminder
                   </span>
                 </>
               )}
@@ -231,57 +276,9 @@ export default async function ItemPage({ params }: Props) {
             </div>
           </section>
 
-          {/* INFO / PRICE / TRUST – StockX sheet */}
+          {/* INFO / TRUST / DESCRIPTION */}
           <section className="space-y-6">
-            {/* PRICE + CTA – desktop */}
-            <div className="hidden rounded-2xl border border-slate-800 bg-slate-950/90 p-4 text-slate-50 shadow-[0_18px_40px_rgba(15,23,42,0.85)] lg:block">
-              <div className="mb-3 flex items-baseline justify-between gap-4">
-                <div>
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
-                    {priceTitle}
-                  </div>
-                  <div className="mt-1 text-2xl font-semibold">{priceLabel}</div>
-                  {marketLabel && (
-                    <div className="mt-1 text-xs text-emerald-300">
-                      Markedsværdi: {marketLabel}
-                    </div>
-                  )}
-                  {pricePositionLabel && (
-                    <div className="mt-1 text-[11px] text-slate-400">
-                      {pricePositionLabel}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* CTA – afhænger af mode */}
-              <div className="mt-2 space-y-2">
-                {mode === "live" && (
-                  <button className="w-full rounded-full bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-950">
-                    {primaryCtaLabel}
-                  </button>
-                )}
-
-                {mode === "upcoming" && (
-                  <div className="w-full">
-                    <UpcomingReminder itemId={item.id} />
-                  </div>
-                )}
-
-                {mode === "expired" && (
-                  <Link
-                    href="/drops"
-                    className="block w-full rounded-full border border-slate-600 bg-slate-900/90 px-5 py-3 text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-100"
-                  >
-                    {primaryCtaLabel}
-                  </Link>
-                )}
-
-                <p className="text-[11px] text-slate-500">{primaryCtaSub}</p>
-              </div>
-            </div>
-
-            {/* DRIP AI™ AUTHENTICITY – StockX “trust” modul */}
+            {/* DRIP AI™ AUTHENTICITY */}
             <div className="space-y-3 rounded-2xl border border-slate-800 bg-slate-950/90 p-4">
               <div className="flex items-center justify-between gap-2">
                 <div>
