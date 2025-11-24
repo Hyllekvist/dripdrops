@@ -7,6 +7,7 @@ import { ItemAnalyticsShell } from "@/components/ItemAnalyticsShell";
 import { UpcomingReminder } from "@/components/UpcomingReminder";
 import { DropHeaderCountdown } from "@/components/DropHeaderCountdown";
 import { ItemMobileStickyCta } from "@/components/ItemMobileStickyCta";
+import { ItemTrackingClient } from "./ItemTrackingClient";
 
 type Props = { params: { id: string } };
 
@@ -108,6 +109,13 @@ export default async function ItemPage({ params }: Props) {
 
   return (
     <>
+      {/* Tracking – ingen UI */}
+      <ItemTrackingClient
+        itemId={item.id}
+        dropId={drop?.id ?? null}
+        mode={mode}
+      />
+
       {/* Analytics-hook – ingen UI */}
       <ItemAnalyticsShell
         itemId={item.id}
