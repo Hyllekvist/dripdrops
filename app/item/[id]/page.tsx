@@ -167,8 +167,8 @@ export default async function ItemPage({ params }: Props) {
 
               {/* Info + (desktop) pris + CTA */}
               <div className="border-t border-black/5 px-4 py-4 text-sm dark:border-slate-800">
-                <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] items-center gap-4">
-                  {/* Venstre: designer + title + brand */}
+                <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] items-start gap-4">
+                  {/* Venstre: designer + title + brand + FOMO */}
                   <div>
                     <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
                       {item.designer}
@@ -184,6 +184,14 @@ export default async function ItemPage({ params }: Props) {
                     <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
                       1/1 – ingen restock
                     </p>
+
+                    {/* FOMO VIEWER COUNT */}
+                    {mode === "live" && (
+                      <p className="mt-2 flex items-center gap-2 text-[11px] text-emerald-400">
+                        <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        Flere kigger på varen nu
+                      </p>
+                    )}
                   </div>
 
                   {/* Højre: desktop price + CTA / mobil countdown */}
@@ -235,7 +243,7 @@ export default async function ItemPage({ params }: Props) {
                       </p>
                     </div>
 
-                    {/* MOBIL: countdown + microcopy – ingen pris her */}
+                    {/* MOBIL: countdown – ingen pris her */}
                     <div className="block text-right text-[11px] text-slate-600 dark:text-slate-400 lg:hidden">
                       <DropHeaderCountdown
                         mode={mode}
@@ -250,7 +258,6 @@ export default async function ItemPage({ params }: Props) {
                   {mode === "live" && (
                     <>
                       <span className="inline-flex items-center gap-1 rounded-full bg-slate-900/80 px-3 py-1 text-slate-200">
-                        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
                         Live nu – session-baseret checkout
                       </span>
                       <span className="rounded-full bg-slate-900/60 px-3 py-1 text-slate-300">
