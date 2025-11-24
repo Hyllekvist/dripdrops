@@ -1,18 +1,36 @@
-// app/(site)/HomePage.tsx eller hvor din fil ligger
+// app/(site)/HomePage.tsx
 import Link from "next/link";
 import styles from "./HomePage.module.css";
 import { listActiveDrops } from "@/lib/drops";
 import { listItemsForDrop } from "@/lib/items";
 
+type HeroItem = {
+  id: string;
+  title: string;
+  price: number | null;
+  brand?: string | null;
+  designer?: string | null;
+};
+
 export default async function HomePage() {
   const drops = await listActiveDrops();
   const nextDrop = drops[0] ?? null;
 
-  let heroItem: any = null;
+  let heroItem: HeroItem | null = null;
 
   if (nextDrop) {
     const items = await listItemsForDrop(nextDrop.id);
-    heroItem = items[0] ?? null;
+    const firstItem = items[0];
+
+    if (firstItem) {
+      heroItem = {
+        id: firstItem.id,
+        title: firstItem.title,
+        price: firstItem.price ?? null,
+        brand: firstItem.brand ?? null,
+        designer: firstItem.designer ?? null,
+      };
+    }
   }
 
   const dropLabel = nextDrop
@@ -29,26 +47,26 @@ export default async function HomePage() {
     <div className={styles.wrapper}>
       <section className={styles.hero}>
         <div className={styles.heroContent}>
-          {/* HYPE HERO – kun mobil */}
+          {/* MOBILE HERO PRODUCT (stage item over titlen) */}
           {heroItem && (
             <Link
               href={`/item/${heroItem.id}`}
               className="mb-8 block lg:hidden"
             >
-              <article className="relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-950 shadow-[0_22px_60px_rgba(0,0,0,0.75)]">
-                {/* animated bg */}
-                <div className="pointer-events-none absolute inset-0 animate-pulse-slow bg-[radial-gradient(circle_at_20%_0%,rgba(255,92,222,0.22),transparent_60%),radial-gradient(circle_at_80%_100%,rgba(0,240,255,0.22),transparent_55%)]" />
+              <article className="relative overflow-hidden rounded-3xl border border-slate-800/70 bg-slate-950 shadow-[0_22px_60px_rgba(0,0,0,0.75)] dark:border-slate-700 dark:bg-slate-950">
+                {/* subtle neon bg */}
+                <div className="pointer-events-none absolute inset-0 animate-pulse-slow bg-[radial-gradient(circle_at_20%_0%,rgba(255,92,222,0.18),transparent_60%),radial-gradient(circle_at_80%_100%,rgba(0,240,255,0.18),transparent_55%)]" />
 
                 <div className="relative z-10 px-5 py-5">
                   {/* top row */}
                   <div className="mb-4 flex items-center justify-between text-[11px] text-slate-200">
                     <div className="inline-flex items-center gap-2">
-                      <span className="rounded-full bg-slate-950/80 px-3 py-1 uppercase tracking-[0.18em]">
-                        Stage item
+                      <span className="rounded-full bg-slate-950/90 px-3 py-1 uppercase tracking-[0.18em] text-slate-200">
+                        Hero drop
                       </span>
                       <span className="inline-flex items-center gap-1 text-emerald-300">
                         <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                        {nextDrop?.isLive ? "Live drop" : "Udvalgt til næste drop"}
+                        {nextDrop?.isLive ? "Live lige nu" : "Udvalgt til næste drop"}
                       </span>
                     </div>
                     <span className="text-xs text-slate-400">
@@ -56,10 +74,10 @@ export default async function HomePage() {
                     </span>
                   </div>
 
-                  {/* image */}
+                  {/* image placeholder – kan senere skiftes til rigtig billedkomponent */}
                   <div className="mb-5 overflow-hidden rounded-2xl border border-white/10 bg-[radial-gradient(circle_at_top,#1f2937,#020617_70%)]">
                     <div className="flex aspect-[4/3] items-center justify-center text-[11px] text-slate-300">
-                      Produktbillede kommer her
+                      Preview låst indtil droppet åbner
                     </div>
                   </div>
 
@@ -75,16 +93,14 @@ export default async function HomePage() {
                         {heroItem.title}
                       </p>
                       {heroItem.brand && (
-                        <p className="text-sm text-slate-400">
-                          {heroItem.brand}
-                        </p>
+                        <p className="text-sm text-slate-400">{heroItem.brand}</p>
                       )}
                       <p className="mt-1 text-[11px] text-slate-500">
                         1/1 – ingen restock
                       </p>
                       <p className="mt-2 text-[12px] font-medium text-emerald-300">
                         {nextDrop?.isLive
-                          ? "Live nu – få minutter tilbage"
+                          ? "Live nu – begrænset tid"
                           : `Starter: ${countdownLabel}`}
                       </p>
                     </div>
@@ -94,7 +110,9 @@ export default async function HomePage() {
                         Pris
                       </p>
                       <p className="mt-1 text-lg font-semibold text-slate-50">
-                        {heroItem.price.toLocaleString("da-DK")} kr
+                        {typeof heroItem.price === "number"
+                          ? `${heroItem.price.toLocaleString("da-DK")} kr`
+                          : "Se pris"}
                       </p>
                     </div>
                   </div>
@@ -186,7 +204,7 @@ export default async function HomePage() {
                 </div>
                 <div className={styles.mockPriceRow}>
                   <span className={styles.mockPrice}>
-                    {heroItem
+                    {heroItem && typeof heroItem.price === "number"
                       ? `${heroItem.price.toLocaleString("da-DK")} kr`
                       : "9.500 kr"}
                   </span>
