@@ -4,7 +4,7 @@ import styles from "./HomePage.module.css";
 import { listActiveDrops } from "@/lib/drops";
 import { listItemsForDrop } from "@/lib/items";
 import { HeroClickTracker } from "./HeroClickTracker";
-
+import { HomeCtaTracker } from "./HomeCtaTracker";
 
 type HeroItem = {
   id: string;
@@ -161,12 +161,23 @@ export default async function HomePage() {
 
           {/* HERO CTAs */}
           <div className={styles.heroActions}>
-            <Link href="/drops" className={styles.primaryCta}>
-              Browse drops
-            </Link>
-            <Link href="/sell" className={styles.secondaryCta}>
-              Sælg din næste favorit
-            </Link>
+            <HomeCtaTracker
+              eventName="dd_cta_click"
+              payload={{ label: "browse_drops", position: "hero" }}
+            >
+              <Link href="/drops" className={styles.primaryCta}>
+                Browse drops
+              </Link>
+            </HomeCtaTracker>
+
+            <HomeCtaTracker
+              eventName="dd_cta_click"
+              payload={{ label: "sell_next_favorite", position: "hero" }}
+            >
+              <Link href="/sell" className={styles.secondaryCta}>
+                Sælg din næste favorit
+              </Link>
+            </HomeCtaTracker>
           </div>
 
           {/* FEATURE GRID */}
