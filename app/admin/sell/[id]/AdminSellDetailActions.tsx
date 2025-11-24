@@ -11,8 +11,10 @@ type Props = {
 
 export function AdminSellDetailActions({ id, status }: Props) {
   const router = useRouter();
+
   const [localStatus, setLocalStatus] = useState(status);
-  const [loading, setLoading] = useState<"approved" | "rejected" | null>(null);
+  const [loading, setLoading] =
+    useState<"approved" | "rejected" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function updateStatus(nextStatus: "approved" | "rejected") {
@@ -34,14 +36,16 @@ export function AdminSellDetailActions({ id, status }: Props) {
       const data = await res.json().catch(() => null);
 
       if (!res.ok) {
-        throw new Error(data?.error || "Ukendt fejl fra API");
+        throw new Error(data?.error || "Ukendt fejl.");
       }
 
-      // Vi forventer at API’en returnerer newStatus
+      // Brug API’ens newStatus, fallback hvis ikke sendt med
       const newStatus = data?.newStatus ?? nextStatus;
+
+      // Opdater UI lokalt
       setLocalStatus(newStatus);
 
-      // Hent server-data igen (så /admin/sell også ser opdateringen)
+      // Opdater server-rendered data (liste, pages osv.)
       router.refresh();
     } catch (err: any) {
       console.error("Admin status update error:", err);
@@ -52,7 +56,12 @@ export function AdminSellDetailActions({ id, status }: Props) {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
+      {/* Status pill flyttet ind i denne komponent */}
+      <div className="inline-flex rounded-full bg-slate-900 px-3 py-1 text-[11px] text-slate-200">
+        {localStatus}
+      </div>
+
       <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
         Handlinger
       </div>
@@ -91,9 +100,7 @@ export function AdminSellDetailActions({ id, status }: Props) {
       </p>
 
       {error && (
-        <p className="text-[11px] text-rose-400">
-          Fejl: {error}
-        </p>
+        <p className="text-[11px] text-rose-400">Fejl: {error}</p>
       )}
     </div>
   );
