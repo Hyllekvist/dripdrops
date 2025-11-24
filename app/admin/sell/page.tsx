@@ -1,4 +1,3 @@
-// app/admin/sell/page.tsx
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -16,7 +15,7 @@ type Submission = {
   condition: string | null;
   status: string;
   image_count: number;
-  image_urls: any; // jsonb -> vi caster selv nedenfor
+  image_urls: unknown;
 };
 
 export const metadata = {
@@ -71,7 +70,7 @@ export default async function AdminSellPage() {
         <div className="space-y-3">
           {submissions.map((s) => {
             const imageUrls: string[] = Array.isArray(s.image_urls)
-              ? s.image_urls
+              ? (s.image_urls as string[])
               : [];
 
             return (
