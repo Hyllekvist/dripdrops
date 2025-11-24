@@ -1,4 +1,5 @@
 // app/admin/sell/page.tsx
+import Link from "next/link";
 import { createClient } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
@@ -77,9 +78,10 @@ export default async function AdminSellPage() {
               : [];
 
             return (
-              <article
+              <Link
                 key={s.id}
-                className="rounded-2xl border border-slate-800 bg-slate-950/85 p-4 text-sm"
+                href={`/admin/sell/${s.id}`}
+                className="block rounded-2xl border border-slate-800 bg-slate-950/85 p-4 text-sm transition hover:-translate-y-0.5 hover:border-slate-500 hover:bg-slate-900/90"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="flex-1 min-w-[200px] space-y-1">
@@ -142,7 +144,7 @@ export default async function AdminSellPage() {
                     </div>
                   </div>
                 </div>
-              </article>
+              </Link>
             );
           })}
         </div>
