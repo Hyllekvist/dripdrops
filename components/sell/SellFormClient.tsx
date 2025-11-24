@@ -23,7 +23,6 @@ export function SellFormClient() {
     e.preventDefault();
     setErrorMsg(null);
 
-    // Basic validering
     if (!title.trim()) {
       setErrorMsg("Angiv mindst en titel på varen.");
       return;
@@ -66,7 +65,19 @@ export function SellFormClient() {
         throw new Error("Server-fejl");
       }
 
-      // Redirect til tak-side
+      // Gem et lille snapshot til tak-siden
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(
+          "dd_last_sell_submission",
+          JSON.stringify({
+            title,
+            brand,
+            price: typeof price === "number" ? price : null,
+            condition,
+          })
+        );
+      }
+
       router.push("/sell/thanks");
     } catch (err) {
       console.error(err);
