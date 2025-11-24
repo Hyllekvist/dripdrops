@@ -32,29 +32,28 @@ export async function POST(req: Request) {
     const priceNumber =
       typeof price === "string" && price ? Number(price) : null;
 
-    // Vi bruger et explicit id så vi kan navngive storage-sti
+    // Brug eget id så vi kan navngive sti i Storage
     const submissionId = crypto.randomUUID();
 
     const imageUrls: string[] = [];
     let uploadedCount = 0;
 
+    // VIGTIGT: bucket-navn skal matche det du har oprettet i Supabase
+    const bucketName = "sell-images";
+
     for (let i = 0; i < images.length; i++) {
       const file = images[i];
       if (!(file instanceof File)) continue;
 
-      const ext =
-        file.name && file.name.includes(".")
-          ? file.name.split(".").pop()
-          : "jpg";
+      const originalName = file.name || `image-${i}.jpg`;
+      const ext = originalName.includes(".")
+        ? originalName.split(".").pop()
+        : "jpg";
 
       const path = `submissions/${submissionId}/${i}-${Date.now()}.${ext}`;
 
-      const arrayBuffer = await file.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-
-      const { error: uploadError } = await supabase.storage
-        .from("sell-images")
-        .upload(path, buffer, {
+      const { data: uploadData, error: uploadError } =
+        await supabase.storage.from(bucketName).upload(path, file, {
           cacheControl: "3600",
           upsert: false,
           contentType: file.type || "image/jpeg",
@@ -67,7 +66,7 @@ export async function POST(req: Request) {
 
       const { data: publicData } = supabase
         .storage
-        .from("sell-images")
+        .from(bucketName)
         .getPublicUrl(path);
 
       if (publicData?.publicUrl) {
