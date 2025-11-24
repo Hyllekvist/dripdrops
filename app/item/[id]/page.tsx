@@ -160,8 +160,8 @@ export default async function ItemPage({ params }: Props) {
         </div>
 
         {/* MAIN GRID */}
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-start">
-          {/* HERO / CARD */}
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-start">
+          {/* HERO / VISUAL */}
           <section className="space-y-4">
             <div className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-100 text-slate-900 shadow-[0_20px_60px_rgba(15,23,42,0.55)] dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50">
               {/* Billede */}
@@ -174,14 +174,15 @@ export default async function ItemPage({ params }: Props) {
                 </div>
               </div>
 
-              {/* Info + (desktop) pris + CTA */}
+              {/* Basic info + mobil-countdown */}
               <div className="border-t border-black/5 px-4 py-4 text-sm dark:border-slate-800">
-                <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] items-start gap-4">
-                  {/* Venstre: designer + title + brand + FOMO */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                      {item.designer}
-                    </div>
+                    {item.designer && (
+                      <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                        {item.designer}
+                      </div>
+                    )}
                     <h1 className="mt-1 text-lg font-semibold leading-tight text-slate-900 dark:text-slate-50">
                       {item.title}
                     </h1>
@@ -194,137 +195,163 @@ export default async function ItemPage({ params }: Props) {
                       1/1 – ingen restock
                     </p>
 
-                    {/* FOMO VIEWER COUNT */}
                     {mode === "live" && (
                       <p className="mt-2 flex items-center gap-2 text-[11px] text-emerald-400">
-                        <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
                         Flere kigger på varen nu
                       </p>
                     )}
                   </div>
 
-                  {/* Højre: desktop price + CTA / mobil countdown */}
-                  <div className="text-right text-xs">
-                    {/* DESKTOP: pris + CTA */}
-                    <div className="hidden lg:block">
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                        {priceTitle}
-                      </div>
-                      <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-50">
-                        {priceLabel}
-                      </div>
-                      {marketLabel && (
-                        <div className="mt-1 text-[11px] text-emerald-500 dark:text-emerald-300">
-                          Markedsværdi: {marketLabel}
-                        </div>
-                      )}
-                      {pricePositionLabel && (
-                        <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                          {pricePositionLabel}
-                        </div>
-                      )}
-
-                      <div className="mt-3">
-                        {mode === "live" && (
-                          <ItemCtaTracker
-                            eventName="dd_item_cta_click"
-                            label="buy_now_desktop"
-                            itemId={item.id}
-                            dropId={drop?.id ?? null}
-                            mode={mode}
-                          >
-                            <button className="w-full rounded-full bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-950">
-                              {primaryCtaLabel}
-                            </button>
-                          </ItemCtaTracker>
-                        )}
-
-                        {mode === "upcoming" && (
-                          <ItemCtaTracker
-                            eventName="dd_item_cta_click"
-                            label="reminder_desktop"
-                            itemId={item.id}
-                            dropId={drop?.id ?? null}
-                            mode={mode}
-                          >
-                            <div className="w-full">
-                              <UpcomingReminder itemId={item.id} />
-                            </div>
-                          </ItemCtaTracker>
-                        )}
-
-                        {mode === "expired" && (
-                          <ItemCtaTracker
-                            eventName="dd_item_cta_click"
-                            label="see_upcoming_drops_desktop"
-                            itemId={item.id}
-                            dropId={drop?.id ?? null}
-                            mode={mode}
-                          >
-                            <Link
-                              href="/drops"
-                              className="block w-full rounded-full border border-slate-600 bg-slate-900/90 px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-100"
-                            >
-                              {primaryCtaLabel}
-                            </Link>
-                          </ItemCtaTracker>
-                        )}
-                      </div>
-
-                      <p className="mt-1 text-[10px] text-slate-500 dark:text-slate-500">
-                        {primaryCtaSub}
-                      </p>
-                    </div>
-
-                    {/* MOBIL: countdown – ingen pris her */}
-                    <div className="block text-right text-[11px] text-slate-600 dark:text-slate-400 lg:hidden">
-                      <DropHeaderCountdown
-                        mode={mode}
-                        startsAt={drop?.starts_at ?? null}
-                      />
-                    </div>
+                  {/* MOBIL: countdown tæt på produktet */}
+                  <div className="text-right text-[11px] text-slate-600 dark:text-slate-400 lg:hidden">
+                    <DropHeaderCountdown
+                      mode={mode}
+                      startsAt={drop?.starts_at ?? null}
+                    />
                   </div>
-                </div>
-
-                {/* Card-footer: drop-meta – uden pris */}
-                <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-slate-600 dark:text-slate-400">
-                  {mode === "live" && (
-                    <>
-                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-900/80 px-3 py-1 text-slate-200">
-                        Live nu – session-baseret checkout
-                      </span>
-                      <span className="rounded-full bg-slate-900/60 px-3 py-1 text-slate-300">
-                        Sikker betaling via DRIPDROPS
-                      </span>
-                    </>
-                  )}
-                  {mode === "upcoming" && (
-                    <>
-                      <span className="rounded-full bg-slate-900/80 px-3 py-1 text-slate-200">
-                        Dropper snart
-                      </span>
-                      <span className="rounded-full bg-slate-900/60 px-3 py-1 text-slate-300">
-                        Sæt reminder for at være klar
-                      </span>
-                    </>
-                  )}
-                  {mode === "expired" && (
-                    <>
-                      <span className="rounded-full bg-slate-900/80 px-3 py-1 text-slate-200">
-                        Solgt i tidligere drop
-                      </span>
-                      <span className="rounded-full bg-slate-900/60 px-3 py-1 text-slate-300">
-                        Se kommende drops for lignende varer
-                      </span>
-                    </>
-                  )}
                 </div>
               </div>
             </div>
           </section>
 
-          {/* INFO / TRUST / DESCRIPTION */}
-          <section className="space-y-6">
+          {/* RIGHT COLUMN: COMMAND CENTER + DATA + TRUST + DESCRIPTION */}
+          <section className="space-y-4 lg:space-y-5 lg:sticky lg:top-24">
+            {/* COMMAND CENTER */}
+            <div className="space-y-3 rounded-2xl border border-slate-800 bg-slate-950/90 p-4 lg:p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                    Drop overview
+                  </div>
+                  <p className="mt-1 text-xs text-slate-400">
+                    Pris, markedsværdi og timing samlet ét sted.
+                  </p>
+                </div>
+
+                {/* DESKTOP: countdown sammen med command center */}
+                <div className="hidden text-right text-[11px] text-slate-400 lg:block">
+                  <DropHeaderCountdown
+                    mode={mode}
+                    startsAt={drop?.starts_at ?? null}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-end justify-between gap-4">
+                <div>
+                  <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
+                    {priceTitle}
+                  </div>
+                  <div className="mt-1 text-2xl font-semibold text-slate-50">
+                    {priceLabel}
+                  </div>
+                  {marketLabel && (
+                    <div className="mt-1 text-[11px] text-emerald-400">
+                      Markedsværdi: {marketLabel}
+                    </div>
+                  )}
+                  {pricePositionLabel && (
+                    <div className="mt-1 text-[11px] text-slate-400">
+                      {pricePositionLabel}
+                    </div>
+                  )}
+                </div>
+
+                {drop && (
+                  <div className="text-right text-[11px] text-slate-500">
+                    <div>Drop #{drop.sequence}</div>
+                    {mode === "live" && <div>Åben nu</div>}
+                    {mode === "upcoming" && drop.startsAtLabel && (
+                      <div>{drop.startsAtLabel}</div>
+                    )}
+                    {mode === "expired" && <div>Afsluttet</div>}
+                  </div>
+                )}
+              </div>
+
+              {/* DESKTOP: primær CTA – mobil styres af sticky bar */}
+              <div className="mt-4 hidden lg:block">
+                {mode === "live" && (
+                  <ItemCtaTracker
+                    eventName="dd_item_cta_click"
+                    label="buy_now_desktop"
+                    itemId={item.id}
+                    dropId={drop?.id ?? null}
+                    mode={mode}
+                  >
+                    <button className="w-full rounded-full bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-950">
+                      {primaryCtaLabel}
+                    </button>
+                  </ItemCtaTracker>
+                )}
+
+                {mode === "upcoming" && (
+                  <ItemCtaTracker
+                    eventName="dd_item_cta_click"
+                    label="reminder_desktop"
+                    itemId={item.id}
+                    dropId={drop?.id ?? null}
+                    mode={mode}
+                  >
+                    <div className="w-full">
+                      <UpcomingReminder itemId={item.id} />
+                    </div>
+                  </ItemCtaTracker>
+                )}
+
+                {mode === "expired" && (
+                  <ItemCtaTracker
+                    eventName="dd_item_cta_click"
+                    label="see_upcoming_drops_desktop"
+                    itemId={item.id}
+                    dropId={drop?.id ?? null}
+                    mode={mode}
+                  >
+                    <Link
+                      href="/drops"
+                      className="block w-full rounded-full border border-slate-600 bg-slate-900/90 px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-100"
+                    >
+                      {primaryCtaLabel}
+                    </Link>
+                  </ItemCtaTracker>
+                )}
+
+                <p className="mt-2 text-[10px] text-slate-500">
+                  {primaryCtaSub}
+                </p>
+              </div>
+            </div>
+
+            {/* DRIP DATA – enkel markedsviden */}
+            <div className="space-y-3 rounded-2xl border border-slate-800 bg-slate-950/90 p-4">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                    Drip Data
+                  </div>
+                  <p className="mt-1 text-xs text-slate-400">
+                    Vores vurdering af markedet for lignende pieces.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-2 grid grid-cols-2 gap-3 text-[11px] text-slate-200">
+                <div>
+                  <div className="text-slate-500">Markedsværdi</div>
+                  <div className="mt-0.5 text-sm font-medium">
+                    {marketLabel ?? "Kommer snart"}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-slate-500">Prisposition</div>
+                  <div className="mt-0.5 text-sm font-medium">
+                    {pricePositionLabel ?? "Analyseres"}
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* DRIP AI™ AUTHENTICITY */}
             <div className="space-y-3 rounded-2xl border border-slate-800 bg-slate-950/90 p-4">
               <div className="flex items-center justify-between gap-2">
@@ -405,7 +432,7 @@ export default async function ItemPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Sticky CTA – mobil (ejer prisen på small screens) */}
+      {/* Sticky CTA – mobil */}
       <ItemCtaTracker
         eventName="dd_item_cta_click"
         label="sticky_cta_mobile"
