@@ -131,15 +131,15 @@ export default async function ItemPage({ params }: Props) {
             <span className="rounded-full border border-fuchsia-500/60 bg-fuchsia-500/10 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-fuchsia-100">
               Design Drop
             </span>
-            <span className="rounded-full border border-slate-700 bg-slate-900/80 px-3 py-1 text-[11px] text-slate-200">
+            <span className="rounded-full border border-slate-700 bg-slate-900/80 px-3 py-1 text-[11px] text-slate-100">
               1/1 piece
             </span>
             {dropStatusLabel && (
               <span
                 className={
                   mode === "expired"
-                    ? "rounded-full bg-slate-800/80 px-3 py-1 text-[11px] font-medium text-slate-200"
-                    : "rounded-full bg-amber-400/15 px-3 py-1 text-[11px] font-medium text-amber-300"
+                    ? "rounded-full bg-slate-800/80 px-3 py-1 text-[11px] font-medium text-slate-100"
+                    : "rounded-full bg-amber-400/15 px-3 py-1 text-[11px] font-medium text-amber-200"
                 }
               >
                 {dropStatusLabel}
@@ -148,7 +148,7 @@ export default async function ItemPage({ params }: Props) {
           </div>
 
           {drop && (
-            <div className="hidden text-right text-[11px] text-slate-500 lg:block">
+            <div className="hidden text-right text-[11px] text-slate-400 lg:block">
               <div>Drop #{drop.sequence}</div>
               {mode === "live" && <div>Åben nu</div>}
               {mode === "upcoming" && drop.startsAtLabel && (
@@ -163,35 +163,35 @@ export default async function ItemPage({ params }: Props) {
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-start">
           {/* HERO / VISUAL */}
           <section className="space-y-4">
-            <div className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-100 text-slate-900 shadow-[0_20px_60px_rgba(15,23,42,0.55)] dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50">
+            <div className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-950 text-slate-50 shadow-[0_20px_60px_rgba(15,23,42,0.55)]">
               {/* Billede */}
               <div className="relative aspect-[4/3] sm:aspect-[4/3]">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,#0f172a,#020617_65%)] dark:bg-[radial-gradient(circle_at_center,#020617,#000000_70%)]" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,#020617,#000000_70%)]" />
                 <div className="relative z-10 flex h-full w-full items-center justify-center">
-                  <span className="rounded-full bg-black/60 px-3 py-1 text-[11px] text-slate-100 backdrop-blur-sm">
+                  <span className="rounded-full bg-black/70 px-3 py-1 text-[11px] text-slate-100 backdrop-blur-sm">
                     Produktbillede kommer her
                   </span>
                 </div>
               </div>
 
               {/* Basic info + mobil-countdown */}
-              <div className="border-t border-black/5 px-4 py-4 text-sm dark:border-slate-800">
+              <div className="border-t border-slate-900 px-4 py-4 text-sm">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     {item.designer && (
-                      <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                      <div className="text-xs font-medium text-slate-300">
                         {item.designer}
                       </div>
                     )}
-                    <h1 className="mt-1 text-lg font-semibold leading-tight text-slate-900 dark:text-slate-50">
+                    <h1 className="mt-1 text-lg font-semibold leading-tight text-slate-50">
                       {item.title}
                     </h1>
                     {item.brand && (
-                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      <p className="mt-1 text-[13px] text-slate-400">
                         {item.brand}
                       </p>
                     )}
-                    <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                    <p className="mt-1 text-[11px] text-slate-400">
                       1/1 – ingen restock
                     </p>
 
@@ -204,7 +204,7 @@ export default async function ItemPage({ params }: Props) {
                   </div>
 
                   {/* MOBIL: countdown tæt på produktet */}
-                  <div className="text-right text-[11px] text-slate-600 dark:text-slate-400 lg:hidden">
+                  <div className="text-right text-[11px] text-slate-300 lg:hidden">
                     <DropHeaderCountdown
                       mode={mode}
                       startsAt={drop?.starts_at ?? null}
@@ -218,19 +218,52 @@ export default async function ItemPage({ params }: Props) {
           {/* RIGHT COLUMN: COMMAND CENTER + DATA + TRUST + DESCRIPTION */}
           <section className="space-y-4 lg:space-y-5 lg:sticky lg:top-24">
             {/* COMMAND CENTER */}
-            <div className="space-y-3 rounded-2xl border border-slate-800 bg-slate-950/90 p-4 lg:p-5">
-              <div className="flex items-start justify-between gap-3">
+            <div className="space-y-4 rounded-2xl border border-slate-800 bg-slate-900/90 p-4 lg:p-5">
+              <div className="flex items-center justify-between gap-3">
                 <div>
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                  <p className="text-sm font-semibold text-slate-50">
                     Drop overview
-                  </div>
+                  </p>
                   <p className="mt-1 text-xs text-slate-400">
-                    Pris, markedsværdi og timing samlet ét sted.
+                    Pris, timing og markedsdata for dette drop.
                   </p>
                 </div>
+                {dropStatusLabel && (
+                  <span
+                    className={
+                      mode === "expired"
+                        ? "rounded-full bg-slate-800 px-3 py-1 text-[11px] text-slate-200"
+                        : "rounded-full bg-amber-400/15 px-3 py-1 text-[11px] text-amber-200"
+                    }
+                  >
+                    {dropStatusLabel}
+                  </span>
+                )}
+              </div>
 
-                {/* DESKTOP: countdown sammen med command center */}
-                <div className="hidden text-right text-[11px] text-slate-400 lg:block">
+              <div className="flex items-end justify-between gap-4">
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-slate-400">
+                    {priceTitle}
+                  </p>
+                  <p className="mt-1 text-2xl font-semibold text-slate-50">
+                    {priceLabel}
+                  </p>
+
+                  {marketLabel && (
+                    <p className="mt-1 text-[13px] text-emerald-400">
+                      Markedsværdi: {marketLabel}
+                    </p>
+                  )}
+                  {pricePositionLabel && (
+                    <p className="mt-1 text-[11px] text-slate-300">
+                      {pricePositionLabel}
+                    </p>
+                  )}
+                </div>
+
+                {/* Desktop: countdown koblet direkte til pris */}
+                <div className="hidden text-right text-xs text-slate-300 lg:block">
                   <DropHeaderCountdown
                     mode={mode}
                     startsAt={drop?.starts_at ?? null}
@@ -238,40 +271,8 @@ export default async function ItemPage({ params }: Props) {
                 </div>
               </div>
 
-              <div className="flex items-end justify-between gap-4">
-                <div>
-                  <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
-                    {priceTitle}
-                  </div>
-                  <div className="mt-1 text-2xl font-semibold text-slate-50">
-                    {priceLabel}
-                  </div>
-                  {marketLabel && (
-                    <div className="mt-1 text-[11px] text-emerald-400">
-                      Markedsværdi: {marketLabel}
-                    </div>
-                  )}
-                  {pricePositionLabel && (
-                    <div className="mt-1 text-[11px] text-slate-400">
-                      {pricePositionLabel}
-                    </div>
-                  )}
-                </div>
-
-                {drop && (
-                  <div className="text-right text-[11px] text-slate-500">
-                    <div>Drop #{drop.sequence}</div>
-                    {mode === "live" && <div>Åben nu</div>}
-                    {mode === "upcoming" && drop.startsAtLabel && (
-                      <div>{drop.startsAtLabel}</div>
-                    )}
-                    {mode === "expired" && <div>Afsluttet</div>}
-                  </div>
-                )}
-              </div>
-
               {/* DESKTOP: primær CTA – mobil styres af sticky bar */}
-              <div className="mt-4 hidden lg:block">
+              <div className="mt-3 hidden lg:block">
                 {mode === "live" && (
                   <ItemCtaTracker
                     eventName="dd_item_cta_click"
@@ -317,48 +318,49 @@ export default async function ItemPage({ params }: Props) {
                   </ItemCtaTracker>
                 )}
 
-                <p className="mt-2 text-[10px] text-slate-500">
+                <p className="mt-2 text-[10px] text-slate-400">
                   {primaryCtaSub}
                 </p>
               </div>
             </div>
 
             {/* DRIP DATA – enkel markedsviden */}
-            <div className="space-y-3 rounded-2xl border border-slate-800 bg-slate-950/90 p-4">
+            <div className="space-y-3 rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
               <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-semibold text-slate-50">Drip Data</p>
+                <span className="rounded-full bg-slate-950 px-2.5 py-1 text-[11px] text-slate-300">
+                  Markedsindsigt
+                </span>
+              </div>
+
+              <div className="mt-2 grid grid-cols-2 gap-4 text-sm text-slate-100">
                 <div>
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
-                    Drip Data
-                  </div>
-                  <p className="mt-1 text-xs text-slate-400">
-                    Vores vurdering af markedet for lignende pieces.
+                  <p className="text-[11px] text-slate-400">Markedsværdi</p>
+                  <p className="mt-1 text-sm font-medium">
+                    {marketLabel ?? "Kommer snart"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-slate-400">Prisposition</p>
+                  <p className="mt-1 text-sm font-medium">
+                    {pricePositionLabel ?? "Analyseres"}
                   </p>
                 </div>
               </div>
 
-              <div className="mt-2 grid grid-cols-2 gap-3 text-[11px] text-slate-200">
-                <div>
-                  <div className="text-slate-500">Markedsværdi</div>
-                  <div className="mt-0.5 text-sm font-medium">
-                    {marketLabel ?? "Kommer snart"}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-slate-500">Prisposition</div>
-                  <div className="mt-0.5 text-sm font-medium">
-                    {pricePositionLabel ?? "Analyseres"}
-                  </div>
-                </div>
-              </div>
+              <p className="text-[11px] text-slate-500">
+                Kilde: Offentlige salgsdata (StockX, GOAT m.fl.) kombineret med
+                Drip AI™ vurdering.
+              </p>
             </div>
 
             {/* DRIP AI™ AUTHENTICITY */}
-            <div className="space-y-3 rounded-2xl border border-slate-800 bg-slate-950/90 p-4">
+            <div className="space-y-3 rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
               <div className="flex items-center justify-between gap-2">
                 <div>
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
-                    DRIP AI™ AUTHENTICITY SCAN
-                  </div>
+                  <p className="text-sm font-semibold text-slate-50">
+                    DRIP AI™ authenticity
+                  </p>
                   <p className="mt-1 text-xs text-slate-400">
                     {item.aiAuthenticity}% sandsynlig original baseret på
                     billeder, pris og historik.
@@ -376,14 +378,14 @@ export default async function ItemPage({ params }: Props) {
               </div>
 
               {pricePositionLabel && (
-                <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-slate-300">
-                  <span className="rounded-full bg-slate-900/80 px-3 py-1">
+                <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-slate-100">
+                  <span className="rounded-full bg-slate-950 px-3 py-1">
                     {pricePositionLabel}
                   </span>
-                  <span className="rounded-full bg-slate-900/80 px-3 py-1">
+                  <span className="rounded-full bg-slate-950 px-3 py-1">
                     Model-match: høj
                   </span>
-                  <span className="rounded-full bg-slate-900/80 px-3 py-1">
+                  <span className="rounded-full bg-slate-950 px-3 py-1">
                     Slitage: inden for normalt niveau
                   </span>
                 </div>
@@ -391,26 +393,26 @@ export default async function ItemPage({ params }: Props) {
             </div>
 
             {/* HOW IT WORKS */}
-            <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-950/90 p-4">
-              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
-                Sådan fungerer et DRIPDROP
-              </div>
+            <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
+              <p className="text-sm font-semibold text-slate-50">
+                Sådan fungerer et DripDrop
+              </p>
               {mode === "live" && (
-                <p className="text-xs leading-relaxed text-slate-300">
+                <p className="text-[13px] leading-relaxed text-slate-200">
                   1) Tryk “Køb nu” → 2) Varen reserveres i 2 minutter → 3) Du
                   gennemfører betaling → 4) Sælger sender varen. Én session ad
                   gangen – ingen uendelig scroll.
                 </p>
               )}
               {mode === "upcoming" && (
-                <p className="text-xs leading-relaxed text-slate-300">
+                <p className="text-[13px] leading-relaxed text-slate-200">
                   Når droppet går live, kan du købe med ét tap. Indtil da kan du
                   sætte reminder og gemme varen, så du er klar, når timeren
                   starter.
                 </p>
               )}
               {mode === "expired" && (
-                <p className="text-xs leading-relaxed text-slate-300">
+                <p className="text-[13px] leading-relaxed text-slate-200">
                   Drops er korte og vilde. Denne vare røg i et tidligere drop.
                   Følg kommende drops, hvis du vil fange lignende pieces, før de
                   forsvinder igen.
@@ -419,11 +421,9 @@ export default async function ItemPage({ params }: Props) {
             </div>
 
             {/* DESCRIPTION */}
-            <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-950/90 p-4">
-              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
-                Beskrivelse
-              </div>
-              <p className="whitespace-pre-line text-sm leading-relaxed text-slate-200">
+            <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
+              <p className="text-sm font-semibold text-slate-50">Beskrivelse</p>
+              <p className="whitespace-pre-line text-[13px] leading-relaxed text-slate-200">
                 {item.description}
               </p>
               <p className="pt-1 text-[11px] text-slate-500">{scarcityFooter}</p>
