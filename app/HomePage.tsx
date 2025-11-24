@@ -3,6 +3,7 @@ import Link from "next/link";
 import styles from "./HomePage.module.css";
 import { listActiveDrops } from "@/lib/drops";
 import { listItemsForDrop } from "@/lib/items";
+import { HeroClickTracker } from "./HeroClickTracker";
 
 type HeroItem = {
   id: string;
@@ -49,88 +50,94 @@ export default async function HomePage() {
         <div className={styles.heroContent}>
           {/* MOBILE HERO PRODUCT (stage item over titlen) */}
           {heroItem && (
-            <Link
-              href={`/item/${heroItem.id}`}
-              className="mb-8 block lg:hidden"
-            >
-              <article className="relative overflow-hidden rounded-3xl border border-slate-800/70 bg-slate-950 shadow-[0_22px_60px_rgba(0,0,0,0.75)] dark:border-slate-700 dark:bg-slate-950">
-                {/* subtle neon bg */}
-                <div className="pointer-events-none absolute inset-0 animate-pulse-slow bg-[radial-gradient(circle_at_20%_0%,rgba(255,92,222,0.18),transparent_60%),radial-gradient(circle_at_80%_100%,rgba(0,240,255,0.18),transparent_55%)]" />
+            <HeroClickTracker itemId={heroItem.id}>
+              <Link
+                href={`/item/${heroItem.id}`}
+                className="mb-8 block lg:hidden"
+              >
+                <article className="relative overflow-hidden rounded-3xl border border-slate-800/70 bg-slate-950 shadow-[0_22px_60px_rgba(0,0,0,0.75)] dark:border-slate-700 dark:bg-slate-950">
+                  {/* subtle neon bg */}
+                  <div className="pointer-events-none absolute inset-0 animate-pulse-slow bg-[radial-gradient(circle_at_20%_0%,rgba(255,92,222,0.18),transparent_60%),radial-gradient(circle_at_80%_100%,rgba(0,240,255,0.18),transparent_55%)]" />
 
-                <div className="relative z-10 px-5 py-5">
-                  {/* top row */}
-                  <div className="mb-4 flex items-center justify-between text-[11px] text-slate-200">
-                    <div className="inline-flex items-center gap-2">
-                      <span className="rounded-full bg-slate-950/90 px-3 py-1 uppercase tracking-[0.18em] text-slate-200">
-                        Hero drop
-                      </span>
-                      <span className="inline-flex items-center gap-1 text-emerald-300">
-                        <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                        {nextDrop?.isLive ? "Live lige nu" : "Udvalgt til næste drop"}
+                  <div className="relative z-10 px-5 py-5">
+                    {/* top row */}
+                    <div className="mb-4 flex items-center justify-between text-[11px] text-slate-200">
+                      <div className="inline-flex items-center gap-2">
+                        <span className="rounded-full bg-slate-950/90 px-3 py-1 uppercase tracking-[0.18em] text-slate-200">
+                          Hero drop
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-emerald-300">
+                          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                          {nextDrop?.isLive
+                            ? "Live lige nu"
+                            : "Udvalgt til næste drop"}
+                        </span>
+                      </div>
+                      <span className="text-xs text-slate-400">
+                        DROP #{nextDrop?.sequence ?? 27}
                       </span>
                     </div>
-                    <span className="text-xs text-slate-400">
-                      DROP #{nextDrop?.sequence ?? 27}
-                    </span>
-                  </div>
 
-                  {/* image placeholder – kan senere skiftes til rigtig billedkomponent */}
-                  <div className="mb-5 overflow-hidden rounded-2xl border border-white/10 bg-[radial-gradient(circle_at_top,#1f2937,#020617_70%)]">
-                    <div className="flex aspect-[4/3] items-center justify-center text-[11px] text-slate-300">
-                      Preview låst indtil droppet åbner
+                    {/* image placeholder – kan senere skiftes til rigtig billedkomponent */}
+                    <div className="mb-5 overflow-hidden rounded-2xl border border-white/10 bg-[radial-gradient(circle_at_top,#1f2937,#020617_70%)]">
+                      <div className="flex aspect-[4/3] items-center justify-center text-[11px] text-slate-300">
+                        Preview låst indtil droppet åbner
+                      </div>
                     </div>
-                  </div>
 
-                  {/* meta + price */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      {heroItem.designer && (
-                        <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">
-                          {heroItem.designer}
+                    {/* meta + price */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        {heroItem.designer && (
+                          <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">
+                            {heroItem.designer}
+                          </p>
+                        )}
+                        <p className="mt-1 text-lg font-semibold text-slate-50">
+                          {heroItem.title}
                         </p>
-                      )}
-                      <p className="mt-1 text-lg font-semibold text-slate-50">
-                        {heroItem.title}
-                      </p>
-                      {heroItem.brand && (
-                        <p className="text-sm text-slate-400">{heroItem.brand}</p>
-                      )}
-                      <p className="mt-1 text-[11px] text-slate-500">
-                        1/1 – ingen restock
-                      </p>
-                      <p className="mt-2 text-[12px] font-medium text-emerald-300">
-                        {nextDrop?.isLive
-                          ? "Live nu – begrænset tid"
-                          : `Starter: ${countdownLabel}`}
-                      </p>
+                        {heroItem.brand && (
+                          <p className="text-sm text-slate-400">
+                            {heroItem.brand}
+                          </p>
+                        )}
+                        <p className="mt-1 text-[11px] text-slate-500">
+                          1/1 – ingen restock
+                        </p>
+                        <p className="mt-2 text-[12px] font-medium text-emerald-300">
+                          {nextDrop?.isLive
+                            ? "Live nu – begrænset tid"
+                            : `Starter: ${countdownLabel}`}
+                        </p>
+                      </div>
+
+                      <div className="text-right">
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
+                          Pris
+                        </p>
+                        <p className="mt-1 text-lg font-semibold text-slate-50">
+                          {typeof heroItem.price === "number"
+                            ? `${heroItem.price.toLocaleString("da-DK")} kr`
+                            : "Se pris"}
+                        </p>
+                      </div>
                     </div>
 
-                    <div className="text-right">
-                      <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
-                        Pris
+                    {/* CTA */}
+                    <div className="mt-5 flex items-center justify-between gap-3">
+                      <p className="text-[11px] text-slate-500">
+                        Tap for at åbne droppet.
                       </p>
-                      <p className="mt-1 text-lg font-semibold text-slate-50">
-                        {typeof heroItem.price === "number"
-                          ? `${heroItem.price.toLocaleString("da-DK")} kr`
-                          : "Se pris"}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* CTA */}
-                  <div className="mt-5 flex items-center justify-between gap-3">
-                    <p className="text-[11px] text-slate-500">
-                      Tap for at åbne droppet.
-                    </p>
-                    <div className="rounded-full bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] p-[1px]">
-                      <div className="rounded-full bg-slate-950 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-50">
-                        Se varen
+                      <div className="rounded-full bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] p-[1px]">
+                        <div className="rounded-full bg-slate-950 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-50">
+                          Se varen
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </article>
-            </Link>
+                </article>
+              </Link>
+            </HeroClickTracker>
           )}
 
           {/* DROP PILL */}
