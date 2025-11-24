@@ -2,7 +2,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
 
 type LastSell = {
   title: string;
@@ -13,10 +12,6 @@ type LastSell = {
 
 export function SellThanksClient() {
   const [item, setItem] = useState<LastSell | null>(null);
-  const searchParams = useSearchParams();
-
-  // vi bruger ts-queryparam til at tvinge re-read
-  const ts = searchParams.get("ts");
 
   useEffect(() => {
     try {
@@ -30,7 +25,7 @@ export function SellThanksClient() {
     } catch {
       setItem(null);
     }
-  }, [ts]); // <-- vigtig ændring: kør hver gang ts ændrer sig
+  }, []); // ingen useSearchParams – ingen Suspense-problem
 
   if (!item) return null;
 
