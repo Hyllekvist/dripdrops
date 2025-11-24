@@ -35,7 +35,22 @@ export function SellFormClient() {
     setLoading(false);
 
     if (res.ok) {
-      router.push("/sell/thanks");
+      
+// Gem et lille snapshot til tak-siden
+if (typeof window !== "undefined") {
+  window.localStorage.setItem(
+    "dd_last_sell_submission",
+    JSON.stringify({
+      title,
+      brand,
+      price: typeof price === "number" ? price : null,
+      condition,
+    })
+  );
+}
+
+router.push("/sell/thanks");
+
     } else {
       alert("Der opstod en fejl med upload.");
     }
