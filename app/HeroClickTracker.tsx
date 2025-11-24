@@ -1,3 +1,4 @@
+// app/HeroClickTracker.tsx
 "use client";
 
 import { trackEvent } from "../lib/gtag";
