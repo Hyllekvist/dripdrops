@@ -210,3 +210,13 @@
   font-weight: 600;
   font-size: 13px;
 }
+
+@keyframes pulse-slow {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 6s ease-in-out infinite;
+}
