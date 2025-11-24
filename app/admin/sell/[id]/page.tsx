@@ -1,10 +1,11 @@
 // app/admin/sell/[id]/page.tsx
+export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 import { AdminSellDetailActions } from "./AdminSellDetailActions";
 
-export const dynamic = "force-dynamic";
+
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
