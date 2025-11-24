@@ -1,10 +1,13 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type PriceInput = number | "";
 
 export function SellFormClient() {
+  const router = useRouter();
+
   const [title, setTitle] = useState("");
   const [brand, setBrand] = useState("");
   const [price, setPrice] = useState<PriceInput>("");
@@ -15,12 +18,10 @@ export function SellFormClient() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
-    setSuccessMsg(null);
 
     // Basic validering
     if (!title.trim()) {
@@ -45,7 +46,6 @@ export function SellFormClient() {
 
     setIsSubmitting(true);
     try {
-      // Klar til rigtig backend – lige nu skeleton til /api/sell
       const formData = new FormData();
       formData.append("title", title);
       formData.append("brand", brand);
@@ -66,17 +66,8 @@ export function SellFormClient() {
         throw new Error("Server-fejl");
       }
 
-      setSuccessMsg(
-        "Vi har modtaget din vare. Vi vender tilbage, når AI-scan og drop-match er klar."
-      );
-      // Reset form (billeder nulstilles ikke perfekt i alle browsere, men ok til nu)
-      setTitle("");
-      setBrand("");
-      setPrice("");
-      setDescription("");
-      setCondition("meget_pæn");
-      setEmail("");
-      setFiles(null);
+      // Redirect til tak-side
+      router.push("/sell/thanks");
     } catch (err) {
       console.error(err);
       setErrorMsg(
@@ -127,7 +118,7 @@ export function SellFormClient() {
         </label>
       </div>
 
-      {/* Beskrivelse / stand */}
+      {/* Detaljer */}
       <div className="space-y-3">
         <div className="text-xs uppercase tracking-[0.18em] text-slate-400">
           Detaljer
@@ -189,19 +180,12 @@ export function SellFormClient() {
         </label>
       </div>
 
-      {/* FEEDBACK */}
       {errorMsg && (
         <p className="text-xs text-rose-400 bg-rose-950/40 border border-rose-900/70 rounded-xl px-3 py-2">
           {errorMsg}
         </p>
       )}
-      {successMsg && (
-        <p className="text-xs text-emerald-300 bg-emerald-950/40 border border-emerald-900/70 rounded-xl px-3 py-2">
-          {successMsg}
-        </p>
-      )}
 
-      {/* CTA */}
       <button
         type="submit"
         disabled={isSubmitting}
