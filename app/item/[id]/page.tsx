@@ -8,6 +8,7 @@ import { UpcomingReminder } from "@/components/UpcomingReminder";
 import { DropHeaderCountdown } from "@/components/DropHeaderCountdown";
 import { ItemMobileStickyCta } from "@/components/ItemMobileStickyCta";
 import { ItemTrackingClient } from "./ItemTrackingClient";
+import { ItemCtaTracker } from "./ItemCtaTracker";
 
 type Props = { params: { id: string } };
 
@@ -225,24 +226,48 @@ export default async function ItemPage({ params }: Props) {
 
                       <div className="mt-3">
                         {mode === "live" && (
-                          <button className="w-full rounded-full bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-950">
-                            {primaryCtaLabel}
-                          </button>
+                          <ItemCtaTracker
+                            eventName="dd_item_cta_click"
+                            label="buy_now_desktop"
+                            itemId={item.id}
+                            dropId={drop?.id ?? null}
+                            mode={mode}
+                          >
+                            <button className="w-full rounded-full bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-950">
+                              {primaryCtaLabel}
+                            </button>
+                          </ItemCtaTracker>
                         )}
 
                         {mode === "upcoming" && (
-                          <div className="w-full">
-                            <UpcomingReminder itemId={item.id} />
-                          </div>
+                          <ItemCtaTracker
+                            eventName="dd_item_cta_click"
+                            label="reminder_desktop"
+                            itemId={item.id}
+                            dropId={drop?.id ?? null}
+                            mode={mode}
+                          >
+                            <div className="w-full">
+                              <UpcomingReminder itemId={item.id} />
+                            </div>
+                          </ItemCtaTracker>
                         )}
 
                         {mode === "expired" && (
-                          <Link
-                            href="/drops"
-                            className="block w-full rounded-full border border-slate-600 bg-slate-900/90 px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-100"
+                          <ItemCtaTracker
+                            eventName="dd_item_cta_click"
+                            label="see_upcoming_drops_desktop"
+                            itemId={item.id}
+                            dropId={drop?.id ?? null}
+                            mode={mode}
                           >
-                            {primaryCtaLabel}
-                          </Link>
+                            <Link
+                              href="/drops"
+                              className="block w-full rounded-full border border-slate-600 bg-slate-900/90 px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-100"
+                            >
+                              {primaryCtaLabel}
+                            </Link>
+                          </ItemCtaTracker>
                         )}
                       </div>
 
@@ -381,14 +406,22 @@ export default async function ItemPage({ params }: Props) {
       </div>
 
       {/* Sticky CTA – mobil (ejer prisen på small screens) */}
-      <ItemMobileStickyCta
-        mode={mode}
-        priceTitle={priceTitle}
-        priceLabel={priceLabel}
-        marketLabel={marketLabel}
-        primaryCtaLabel={primaryCtaLabel}
+      <ItemCtaTracker
+        eventName="dd_item_cta_click"
+        label="sticky_cta_mobile"
         itemId={item.id}
-      />
+        dropId={drop?.id ?? null}
+        mode={mode}
+      >
+        <ItemMobileStickyCta
+          mode={mode}
+          priceTitle={priceTitle}
+          priceLabel={priceLabel}
+          marketLabel={marketLabel}
+          primaryCtaLabel={primaryCtaLabel}
+          itemId={item.id}
+        />
+      </ItemCtaTracker>
     </>
   );
 }
