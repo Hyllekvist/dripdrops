@@ -1,9 +1,9 @@
-// app/(site)/HomePage.tsx
+// app/HomePage.tsx
 import Link from "next/link";
 import styles from "./HomePage.module.css";
 import { listActiveDrops } from "@/lib/drops";
 import { listItemsForDrop } from "@/lib/items";
-import { HeroClickTracker } from "./HeroClickTracker";
+import { HeroClickTracker } from "./heroclick";
 
 type HeroItem = {
   id: string;
