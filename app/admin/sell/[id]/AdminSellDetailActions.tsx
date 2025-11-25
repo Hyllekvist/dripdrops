@@ -7,14 +7,9 @@ type Props = {
   id: string;
   status: string;
   itemId: string | null;
-  showStatusPill?: boolean; // 👈 ny optional prop
 };
 
-export function AdminSellDetailActions({
-  id,
-  status,
-  itemId,
-}: Props) {
+export function AdminSellDetailActions({ id, status, itemId }: Props) {
   const router = useRouter();
 
   const [localStatus, setLocalStatus] = useState(status);
