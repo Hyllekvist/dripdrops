@@ -173,7 +173,11 @@ export default async function AdminSellDetailPage({ params }: Props) {
             </div>
           </div>
 
-          <AdminSellDetailActions id={s.id} status={s.status} />
+<AdminSellDetailActions
+  id={s.id}
+  status={s.status}
+  itemId={s.item_id ?? null}
+/>
 
           <div className="pt-2 border-t border-slate-800 text-[11px] text-slate-500">
             Når du godkender, opretter vi et rigtigt item i{" "}
