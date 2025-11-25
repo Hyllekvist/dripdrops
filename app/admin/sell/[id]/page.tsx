@@ -1,4 +1,3 @@
-// app/admin/sell/[id]/page.tsx
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
@@ -22,7 +21,7 @@ type SubmissionDetail = {
   status: string;
   image_count: number;
   image_urls: unknown;
-  item_id: string | null; // ← NY
+  item_id: string | null;
 };
 
 export const metadata = {
@@ -40,7 +39,7 @@ export default async function AdminSellDetailPage({ params }: Props) {
     .from("sell_submissions")
     .select(
       "id, created_at, title, brand, price_idea, email, condition, status, image_count, image_urls, item_id"
-    ) // ← item_id added
+    )
     .eq("id", params.id)
     .single();
 
@@ -83,8 +82,9 @@ export default async function AdminSellDetailPage({ params }: Props) {
             <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
               Status
             </div>
-            <AdminSellDetailActions id={s.id} status={s.status} showStatusPill />
-         
+            <div className="inline-flex rounded-full bg-slate-900 px-3 py-1 text-[11px] text-slate-200">
+              {s.status}
+            </div>
           </div>
 
           {s.item_id && (
@@ -173,11 +173,11 @@ export default async function AdminSellDetailPage({ params }: Props) {
             </div>
           </div>
 
-<AdminSellDetailActions
-  id={s.id}
-  status={s.status}
-  itemId={s.item_id ?? null}
-/>
+          <AdminSellDetailActions
+            id={s.id}
+            status={s.status}
+            itemId={s.item_id}
+          />
 
           <div className="pt-2 border-t border-slate-800 text-[11px] text-slate-500">
             Når du godkender, opretter vi et rigtigt item i{" "}
