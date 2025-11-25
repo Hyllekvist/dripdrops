@@ -1,4 +1,3 @@
-// app/admin/sell/[id]/AdminSellDetailActions.tsx
 "use client";
 
 import { useState } from "react";
@@ -7,19 +6,28 @@ import { useRouter } from "next/navigation";
 type Props = {
   id: string;
   status: string;
+  itemId: string | null;
+  showStatusPill?: boolean; // 👈 ny optional prop
 };
 
-export function AdminSellDetailActions({ id, status }: Props) {
+export function AdminSellDetailActions({
+  id,
+  status,
+  itemId,
+}: Props) {
   const router = useRouter();
 
   const [localStatus, setLocalStatus] = useState(status);
-  const [loading, setLoading] =
-    useState<"approved" | "rejected" | null>(null);
+  const [localItemId, setLocalItemId] = useState<string | null>(itemId);
+  const [loadingStatus, setLoadingStatus] = useState<
+    "approved" | "rejected" | null
+  >(null);
+  const [creatingItem, setCreatingItem] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function updateStatus(nextStatus: "approved" | "rejected") {
     setError(null);
-    setLoading(nextStatus);
+    setLoadingStatus(nextStatus);
 
     const endpoint =
       nextStatus === "approved"
@@ -36,44 +44,67 @@ export function AdminSellDetailActions({ id, status }: Props) {
       const data = await res.json().catch(() => null);
 
       if (!res.ok) {
-        throw new Error(data?.error || "Ukendt fejl.");
+        throw new Error(data?.error || "Ukendt fejl fra API");
       }
 
-      // Brug API’ens newStatus, fallback hvis ikke sendt med
       const newStatus = data?.newStatus ?? nextStatus;
-
-      // Opdater UI lokalt
       setLocalStatus(newStatus);
-
-      // Opdater server-rendered data (liste, pages osv.)
       router.refresh();
     } catch (err: any) {
       console.error("Admin status update error:", err);
       setError(err.message || "Kunne ikke opdatere status.");
     } finally {
-      setLoading(null);
+      setLoadingStatus(null);
+    }
+  }
+
+  async function createItem() {
+    if (localItemId || localStatus !== "approved") return;
+
+    setError(null);
+    setCreatingItem(true);
+
+    try {
+      const res = await fetch("/api/admin/sell/create-item", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        throw new Error(data?.error || "Ukendt fejl fra create-item API");
+      }
+
+      if (data?.itemId) {
+        setLocalItemId(data.itemId as string);
+      }
+
+      router.refresh();
+    } catch (err: any) {
+      console.error("Create item error:", err);
+      setError(err.message || "Kunne ikke oprette item.");
+    } finally {
+      setCreatingItem(false);
     }
   }
 
   return (
     <div className="space-y-3">
-      {/* Status pill flyttet ind i denne komponent */}
-      <div className="inline-flex rounded-full bg-slate-900 px-3 py-1 text-[11px] text-slate-200">
-        {localStatus}
-      </div>
-
       <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
         Handlinger
       </div>
 
+      {/* Status-knapper */}
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
-          disabled={loading !== null || localStatus === "approved"}
+          disabled={loadingStatus !== null || localStatus === "approved"}
           onClick={() => updateStatus("approved")}
           className="rounded-full bg-emerald-500 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-950 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {loading === "approved"
+          {loadingStatus === "approved"
             ? "Godkender…"
             : localStatus === "approved"
             ? "Godkendt"
@@ -82,11 +113,11 @@ export function AdminSellDetailActions({ id, status }: Props) {
 
         <button
           type="button"
-          disabled={loading !== null || localStatus === "rejected"}
+          disabled={loadingStatus !== null || localStatus === "rejected"}
           onClick={() => updateStatus("rejected")}
           className="rounded-full border border-rose-500/70 bg-rose-500/10 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-rose-200 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {loading === "rejected"
+          {loadingStatus === "rejected"
             ? "Afviser…"
             : localStatus === "rejected"
             ? "Afvist"
@@ -99,8 +130,34 @@ export function AdminSellDetailActions({ id, status }: Props) {
         <span className="font-semibold">{localStatus}</span>
       </p>
 
+      {/* Item-oprettelse */}
+      {localStatus === "approved" && (
+        <div className="pt-2 border-t border-slate-800 space-y-2">
+          <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+            Item
+          </div>
+
+          {localItemId ? (
+            <p className="text-[11px] text-emerald-300">
+              Item oprettet for denne submission.
+            </p>
+          ) : (
+            <button
+              type="button"
+              onClick={createItem}
+              disabled={creatingItem}
+              className="rounded-full border border-slate-600 bg-slate-900 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {creatingItem ? "Opretter item…" : "Opret item i items-tabellen"}
+            </button>
+          )}
+        </div>
+      )}
+
       {error && (
-        <p className="text-[11px] text-rose-400">Fejl: {error}</p>
+        <p className="text-[11px] text-rose-400">
+          Fejl: {error}
+        </p>
       )}
     </div>
   );
