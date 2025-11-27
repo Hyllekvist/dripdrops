@@ -2,13 +2,14 @@
 export const dynamic = "force-dynamic";
 
 import { createClient } from "@supabase/supabase-js";
+import Link from "next/link";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-type AdminItemDrop = {
+type DropRef = {
   id: string;
   title: string;
   sequence: number | null;
@@ -24,8 +25,7 @@ type AdminItem = {
   brand: string | null;
   price: number | null;
   drop_id: string | null;
-  // Supabase relation = array (many-to-one via foreign key)
-  drops: AdminItemDrop[] | null;
+  drops: DropRef[];
 };
 
 export const metadata = {
@@ -36,48 +36,63 @@ export const metadata = {
   },
 };
 
-// helper til status-pill
-function getDropStatus(item: AdminItem) {
-  const drop =
-    item.drops && item.drops.length > 0 ? item.drops[0] : null;
+function classifyItem(item: AdminItem) {
+  const drop = item.drops[0];
 
-  if (!drop || !item.drop_id) {
+  if (!drop) {
     return {
+      bucket: "no_drop" as const,
       label: "Uden drop",
-      className:
-        "border-slate-700 bg-slate-900 text-slate-300",
+      chipClass: "bg-slate-900 text-slate-200",
+      drop: null,
     };
   }
 
   const now = new Date();
-  const startsAt = drop.starts_at ? new Date(drop.starts_at) : null;
-  const endsAt = drop.ends_at ? new Date(drop.ends_at) : null;
+  const starts = drop.starts_at ? new Date(drop.starts_at) : null;
+  const ends = drop.ends_at ? new Date(drop.ends_at) : null;
 
-  const isLiveExplicit = drop.is_live === true;
-  const isLiveByDates =
-    !!startsAt && startsAt <= now && (!endsAt || endsAt >= now);
-
-  if (isLiveExplicit || isLiveByDates) {
+  if (drop.is_live) {
     return {
-      label: "Live drop",
-      className:
-        "border-emerald-500 bg-emerald-500 text-slate-950",
+      bucket: "active" as const,
+      label: `Live i drop #${drop.sequence ?? "?"}`,
+      chipClass: "bg-emerald-500/10 text-emerald-300 border border-emerald-400/60",
+      drop,
     };
   }
 
-  if (startsAt && startsAt > now) {
+  if (starts && starts > now) {
     return {
-      label: "Kommende drop",
-      className:
-        "border-sky-500/70 bg-sky-500/10 text-sky-300",
+      bucket: "active" as const,
+      label: `Kommende drop #${drop.sequence ?? "?"}`,
+      chipClass: "bg-sky-500/10 text-sky-300 border border-sky-400/60",
+      drop,
     };
   }
 
+  if (ends && ends < now) {
+    return {
+      bucket: "past" as const,
+      label: `Afsluttet drop #${drop.sequence ?? "?"}`,
+      chipClass: "bg-slate-900 text-slate-300 border border-slate-700",
+      drop,
+    };
+  }
+
+  // Fallback
   return {
-    label: "Afsluttet drop",
-    className:
-      "border-slate-600 bg-slate-800 text-slate-100",
+    bucket: "active" as const,
+    label: `I drop #${drop.sequence ?? "?"}`,
+    chipClass: "bg-slate-900 text-slate-200 border border-slate-700",
+    drop,
   };
+}
+
+function formatDate(d: string) {
+  return new Date(d).toLocaleString("da-DK", {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
 }
 
 export default async function AdminItemsPage() {
@@ -106,7 +121,7 @@ export default async function AdminItemsPage() {
   if (error) {
     console.error("Admin items error:", error);
     return (
-      <div className="mx-auto max-w-5xl px-4 py-10">
+      <div className="mx-auto max-w-5xl px-4 pb-16 pt-8">
         <h1 className="text-xl font-semibold text-slate-50">
           Items – admin
         </h1>
@@ -117,100 +132,290 @@ export default async function AdminItemsPage() {
     );
   }
 
-  const items = (data ?? []) as AdminItem[];
+  const raw = (data ?? []) as any[];
+
+  const items: AdminItem[] = raw.map((row) => ({
+    id: row.id,
+    created_at: row.created_at,
+    title: row.title,
+    brand: row.brand,
+    price: row.price,
+    drop_id: row.drop_id ?? null,
+    drops: Array.isArray(row.drops)
+      ? (row.drops as DropRef[])
+      : row.drops
+      ? [row.drops as DropRef]
+      : [],
+  }));
+
+  const noDrop: AdminItem[] = [];
+  const activeDrops: AdminItem[] = [];
+  const pastDrops: AdminItem[] = [];
+
+  for (const item of items) {
+    const { bucket } = classifyItem(item);
+    if (bucket === "no_drop") noDrop.push(item);
+    else if (bucket === "active") activeDrops.push(item);
+    else pastDrops.push(item);
+  }
+
+  const total = items.length;
 
   return (
-    <div className="mx-auto max-w-5xl px-4 pb-16 pt-8 space-y-6">
+    <div className="mx-auto max-w-5xl px-4 pb-16 pt-8 space-y-8">
       <header className="space-y-2">
         <h1 className="text-xl font-semibold text-slate-50">
           Items – admin
         </h1>
         <p className="text-sm text-slate-400">
-          Rigtige items i systemet. Bruges til at matche drops og tjekke priser.
+          Rigtige items i systemet. Bruges til at matche drops, tjekke priser
+          og holde styr på, hvad der er live, planlagt og afsluttet.
+        </p>
+        <p className="text-xs text-slate-500">
+          Totalt:{" "}
+          <span className="font-medium text-slate-200">{total}</span> items ·{" "}
+          <span className="text-emerald-300">{noDrop.length}</span> uden drop ·{" "}
+          <span className="text-sky-300">{activeDrops.length}</span> i aktive
+          drops · <span className="text-slate-300">{pastDrops.length}</span> i
+          afsluttede drops.
         </p>
       </header>
 
-      {items.length === 0 ? (
-        <p className="text-sm text-slate-500">
-          Der er endnu ingen items i systemet.
-        </p>
-      ) : (
-        <div className="space-y-3">
-          {items.map((item) => {
-            const drop =
-              item.drops && item.drops.length > 0
-                ? item.drops[0]
-                : null;
-            const status = getDropStatus(item);
+      {/* Items uden drop – vigtigst først */}
+      <section className="space-y-3">
+        <div className="flex items-baseline justify-between gap-2">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-100">
+              🔶 Items uden drop
+            </h2>
+            <p className="text-xs text-slate-500">
+              Items der er oprettet, men ikke koblet til et drop endnu.
+            </p>
+          </div>
+          <span className="text-xs text-slate-400">
+            {noDrop.length} item{noDrop.length === 1 ? "" : "s"}
+          </span>
+        </div>
 
-            return (
-              <article
-                key={item.id}
-                className="rounded-2xl border border-slate-800 bg-slate-950/85 p-4 text-sm"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  {/* Venstre: basic info */}
-                  <div className="flex-1 min-w-[200px] space-y-1">
-                    <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
-                      {new Date(item.created_at).toLocaleString("da-DK")}
-                    </div>
-                    <h2 className="text-sm font-semibold text-slate-50">
-                      {item.title}
-                    </h2>
-                    <p className="text-xs text-slate-400">
-                      {item.brand || "Ukendt brand"}
-                    </p>
-
-                    {drop && (
-                      <p className="mt-1 text-xs text-slate-500">
-                        Drop:{" "}
-                        <span className="text-slate-200">
-                          {drop.sequence != null ? `#${drop.sequence} · ` : ""}
-                          {drop.title}
-                        </span>
+        {noDrop.length === 0 ? (
+          <p className="text-xs text-slate-500">
+            Ingen items venter på at blive koblet til et drop.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {noDrop.map((item) => {
+              const meta = classifyItem(item);
+              return (
+                <article
+                  key={item.id}
+                  className="rounded-2xl border border-slate-800 bg-slate-950/85 p-4 text-sm"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="space-y-1 min-w-[220px]">
+                      <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                        {formatDate(item.created_at)}
+                      </div>
+                      <h3 className="text-sm font-semibold text-slate-50">
+                        {item.title}
+                      </h3>
+                      <p className="text-xs text-slate-400">
+                        {item.brand || "Ukendt brand"}
                       </p>
-                    )}
-                  </div>
-
-                  {/* Højre: pris + status-pill + link */}
-                  <div className="min-w-[160px] space-y-2 text-right text-xs">
-                    <div>
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
-                        Pris
-                      </div>
-                      <div className="text-sm text-slate-100">
-                        {item.price
-                          ? `${item.price.toLocaleString("da-DK")} kr`
-                          : "Ikke angivet"}
-                      </div>
                     </div>
 
-                    <div className="flex flex-col items-end gap-1">
-                      <span
-                        className={[
-                          "inline-flex rounded-full border px-3 py-1 text-[11px]",
-                          status.className,
-                        ].join(" ")}
+                    <div className="text-right text-xs space-y-2 min-w-[130px]">
+                      <div>
+                        <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
+                          Pris
+                        </div>
+                        <div className="text-sm text-slate-100">
+                          {item.price
+                            ? `${item.price.toLocaleString("da-DK")} kr`
+                            : "Ikke angivet"}
+                        </div>
+                      </div>
+
+                      <div className="inline-flex rounded-full px-3 py-1 text-[11px] border border-slate-700 bg-slate-900 text-slate-200">
+                        {meta.label}
+                      </div>
+
+                      <Link
+                        href={`/admin/sell`}
+                        className="text-[11px] text-slate-400 underline underline-offset-2 hover:text-slate-200"
                       >
-                        {status.label}
-                      </span>
+                        Match med submission
+                      </Link>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* Items i aktive drops */}
+      <section className="space-y-3">
+        <div className="flex items-baseline justify-between gap-2">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-100">
+              🔷 Items i aktive drops
+            </h2>
+            <p className="text-xs text-slate-500">
+              Items koblet til kommende eller live drops.
+            </p>
+          </div>
+          <span className="text-xs text-slate-400">
+            {activeDrops.length} item{activeDrops.length === 1 ? "" : "s"}
+          </span>
+        </div>
+
+        {activeDrops.length === 0 ? (
+          <p className="text-xs text-slate-500">
+            Ingen items i kommende eller live drops endnu.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {activeDrops.map((item) => {
+              const meta = classifyItem(item);
+              const drop = meta.drop;
+              return (
+                <article
+                  key={item.id}
+                  className="rounded-2xl border border-slate-800 bg-slate-950/85 p-4 text-sm"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="space-y-1 min-w-[220px]">
+                      <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                        {formatDate(item.created_at)}
+                      </div>
+                      <h3 className="text-sm font-semibold text-slate-50">
+                        {item.title}
+                      </h3>
+                      <p className="text-xs text-slate-400">
+                        {item.brand || "Ukendt brand"}
+                      </p>
+                      {drop && (
+                        <p className="text-[11px] text-slate-500">
+                          Drop: {drop.title} (#{drop.sequence ?? "?"})
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="text-right text-xs space-y-2 min-w-[150px]">
+                      <div>
+                        <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
+                          Pris
+                        </div>
+                        <div className="text-sm text-slate-100">
+                          {item.price
+                            ? `${item.price.toLocaleString("da-DK")} kr`
+                            : "Ikke angivet"}
+                        </div>
+                      </div>
+
+                      <div
+                        className={
+                          "inline-flex rounded-full px-3 py-1 text-[11px] " +
+                          meta.chipClass
+                        }
+                      >
+                        {meta.label}
+                      </div>
 
                       {drop && (
-                        <a
+                        <Link
                           href={`/drop/${drop.id}`}
-                          className="text-[11px] text-slate-400 underline-offset-2 hover:text-slate-200 hover:underline"
+                          className="text-[11px] text-slate-400 underline underline-offset-2 hover:text-slate-200"
                         >
-                          Se drop-side →
-                        </a>
+                          Se drop-side
+                        </Link>
                       )}
                     </div>
                   </div>
-                </div>
-              </article>
-            );
-          })}
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* Items i afsluttede drops */}
+      <section className="space-y-3">
+        <div className="flex items-baseline justify-between gap-2">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-100">
+              ⚫ Items i afsluttede drops
+            </h2>
+            <p className="text-xs text-slate-500">
+              Historik – brugbar til læring, prisniveauer og analyse.
+            </p>
+          </div>
+          <span className="text-xs text-slate-400">
+            {pastDrops.length} item{pastDrops.length === 1 ? "" : "s"}
+          </span>
         </div>
-      )}
+
+        {pastDrops.length === 0 ? (
+          <p className="text-xs text-slate-500">
+            Ingen afsluttede drop-items endnu.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {pastDrops.map((item) => {
+              const meta = classifyItem(item);
+              const drop = meta.drop;
+              return (
+                <article
+                  key={item.id}
+                  className="rounded-2xl border border-slate-800 bg-slate-950/85 p-4 text-sm"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="space-y-1 min-w-[220px]">
+                      <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                        {formatDate(item.created_at)}
+                      </div>
+                      <h3 className="text-sm font-semibold text-slate-50">
+                        {item.title}
+                      </h3>
+                      <p className="text-xs text-slate-400">
+                        {item.brand || "Ukendt brand"}
+                      </p>
+                      {drop && (
+                        <p className="text-[11px] text-slate-500">
+                          Drop: {drop.title} (#{drop.sequence ?? "?"})
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="text-right text-xs space-y-2 min-w-[150px]">
+                      <div>
+                        <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
+                          Pris
+                        </div>
+                        <div className="text-sm text-slate-100">
+                          {item.price
+                            ? `${item.price.toLocaleString("da-DK")} kr`
+                            : "Ikke angivet"}
+                        </div>
+                      </div>
+
+                      <div
+                        className={
+                          "inline-flex rounded-full px-3 py-1 text-[11px] " +
+                          meta.chipClass
+                        }
+                      >
+                        {meta.label}
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
     </div>
   );
 }
