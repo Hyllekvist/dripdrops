@@ -8,6 +8,15 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+type AdminItemDrop = {
+  id: string;
+  title: string;
+  sequence: number | null;
+  is_live: boolean | null;
+  starts_at: string | null;
+  ends_at: string | null;
+};
+
 type AdminItem = {
   id: string;
   created_at: string;
@@ -15,14 +24,8 @@ type AdminItem = {
   brand: string | null;
   price: number | null;
   drop_id: string | null;
-  drops: {
-    id: string;
-    title: string;
-    sequence: number | null;
-    is_live: boolean | null;
-    starts_at: string | null;
-    ends_at: string | null;
-  } | null;
+  // Supabase relation = array (many-to-one via foreign key)
+  drops: AdminItemDrop[] | null;
 };
 
 export const metadata = {
@@ -33,9 +36,11 @@ export const metadata = {
   },
 };
 
-// lille helper til status-pill
+// helper til status-pill
 function getDropStatus(item: AdminItem) {
-  const drop = item.drops;
+  const drop =
+    item.drops && item.drops.length > 0 ? item.drops[0] : null;
+
   if (!drop || !item.drop_id) {
     return {
       label: "Uden drop",
@@ -48,10 +53,9 @@ function getDropStatus(item: AdminItem) {
   const startsAt = drop.starts_at ? new Date(drop.starts_at) : null;
   const endsAt = drop.ends_at ? new Date(drop.ends_at) : null;
 
-  // live, hvis is_live === true – ellers fallback til dato-range
   const isLiveExplicit = drop.is_live === true;
   const isLiveByDates =
-    startsAt && startsAt <= now && (!endsAt || endsAt >= now);
+    !!startsAt && startsAt <= now && (!endsAt || endsAt >= now);
 
   if (isLiveExplicit || isLiveByDates) {
     return {
@@ -133,7 +137,10 @@ export default async function AdminItemsPage() {
       ) : (
         <div className="space-y-3">
           {items.map((item) => {
-            const drop = item.drops;
+            const drop =
+              item.drops && item.drops.length > 0
+                ? item.drops[0]
+                : null;
             const status = getDropStatus(item);
 
             return (
