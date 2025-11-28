@@ -1,7 +1,7 @@
 // app/HomePage.tsx
 import Link from "next/link";
 import styles from "./HomePage.module.css";
-import { listActiveDrops } from "@/lib/drops";
+import { listPublicLiveDrops } from "@/lib/drops";
 import { listItemsForDrop } from "@/lib/items";
 import { HeroClickTracker } from "./HeroClickTracker";
 import { HomeCtaTracker } from "./HomeCtaTracker";
@@ -15,13 +15,14 @@ type HeroItem = {
 };
 
 export default async function HomePage() {
-  const drops = await listActiveDrops();
-  const nextDrop = drops[0] ?? null;
+  // 🔒 Kun LIVE drops til forsiden
+  const drops = await listPublicLiveDrops();
+  const activeDrop = drops[0] ?? null;
 
   let heroItem: HeroItem | null = null;
 
-  if (nextDrop) {
-    const items = await listItemsForDrop(nextDrop.id);
+  if (activeDrop) {
+    const items = await listItemsForDrop(activeDrop.id);
     const firstItem = items[0];
 
     if (firstItem) {
@@ -35,22 +36,14 @@ export default async function HomePage() {
     }
   }
 
-  const dropLabel = nextDrop
-    ? nextDrop.isLive
-      ? "Live nu"
-      : nextDrop.startsAtLabel
-      ? `Starter ${nextDrop.startsAtLabel}`
-      : "Næste drop klar"
-    : "Næste drop klar";
-
-  const countdownLabel = nextDrop?.startsAtLabel ?? "Snart";
+  const dropLabel = activeDrop ? "Live nu" : "Næste drop klar";
 
   return (
     <div className={styles.wrapper}>
       <section className={styles.hero}>
         <div className={styles.heroContent}>
-          {/* MOBILE HERO PRODUCT (stage item over titlen) */}
-          {heroItem && (
+          {/* MOBILE HERO PRODUCT (stage item over titlen) – kun hvis der er et live drop */}
+          {heroItem && activeDrop && (
             <HeroClickTracker itemId={heroItem.id}>
               <Link
                 href={`/item/${heroItem.id}`}
@@ -69,20 +62,18 @@ export default async function HomePage() {
                         </span>
                         <span className="inline-flex items-center gap-1 text-emerald-300">
                           <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                          {nextDrop?.isLive
-                            ? "Live lige nu"
-                            : "Udvalgt til næste drop"}
+                          Live lige nu
                         </span>
                       </div>
                       <span className="text-xs text-slate-400">
-                        DROP #{nextDrop?.sequence ?? 27}
+                        DROP #{activeDrop.sequence}
                       </span>
                     </div>
 
                     {/* image placeholder – kan senere skiftes til rigtig billedkomponent */}
                     <div className="mb-5 overflow-hidden rounded-2xl border border-white/10 bg-[radial-gradient(circle_at_top,#1f2937,#020617_70%)]">
                       <div className="flex aspect-[4/3] items-center justify-center text-[11px] text-slate-300">
-                        Preview låst indtil droppet åbner
+                        Produktbillede låst til dette drop
                       </div>
                     </div>
 
@@ -106,9 +97,7 @@ export default async function HomePage() {
                           1/1 – ingen restock
                         </p>
                         <p className="mt-2 text-[12px] font-medium text-emerald-300">
-                          {nextDrop?.isLive
-                            ? "Live nu – begrænset tid"
-                            : `Starter: ${countdownLabel}`}
+                          Live nu – begrænset tid
                         </p>
                       </div>
 
@@ -143,8 +132,8 @@ export default async function HomePage() {
 
           {/* DROP PILL */}
           <div className={styles.dropPill}>
-            <span>DROP #{nextDrop?.sequence ?? 27}</span>
-            <span className={styles.liveDot} />
+            <span>DROP #{activeDrop?.sequence ?? 27}</span>
+            {activeDrop && <span className={styles.liveDot} />}
             <span>{dropLabel}</span>
           </div>
 
@@ -209,10 +198,10 @@ export default async function HomePage() {
           <div className={styles.mockCard}>
             <div className={styles.mockHeader}>
               <span className={styles.mockDropBadge}>
-                {nextDrop ? nextDrop.title : "Design Drop"}
+                {activeDrop ? activeDrop.title : "Design Drop"}
               </span>
               <span className={styles.mockTimer}>
-                {nextDrop?.isLive ? "Live" : "Snart"}
+                {activeDrop ? "Live" : "Snart"}
               </span>
             </div>
             <div className={styles.mockBody}>
@@ -228,14 +217,14 @@ export default async function HomePage() {
                       : "9.500 kr"}
                   </span>
                   <span className={styles.mockViews}>
-                    {nextDrop?.isLive
-                      ? "Live drop"
-                      : heroItem
-                      ? "Udvalgt item"
+                    {activeDrop
+                      ? heroItem
+                        ? "Live drop"
+                        : "Drop åbent"
                       : "221 kigger nu"}
                   </span>
                 </div>
-                {heroItem ? (
+                {heroItem && activeDrop ? (
                   <Link
                     href={`/item/${heroItem.id}`}
                     className={styles.mockCta}
@@ -243,7 +232,9 @@ export default async function HomePage() {
                     Se varen
                   </Link>
                 ) : (
-                  <button className={styles.mockCta}>Køb nu – 1 tilbage</button>
+                  <button className={styles.mockCta}>
+                    Se kommende drops
+                  </button>
                 )}
               </div>
             </div>
