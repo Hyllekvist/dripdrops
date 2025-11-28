@@ -1,52 +1,89 @@
+// app/item/[id]/ItemLiveStatusWatcher.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 
 type Props = {
   itemId: string;
-  onLockChange?: (locked: boolean) => void;
 };
 
-export function ItemLiveStatusWatcher({ itemId, onLockChange }: Props) {
-  const [locked, setLocked] = useState(false);
+type StatusPayload = {
+  sold: boolean;
+  reserved_until: string | null;
+};
 
-  async function check() {
-    try {
-      const res = await fetch(`/api/items/${itemId}/status`, {
-        cache: "no-store",
-      });
-      const data = await res.json();
-
-      if (!res.ok) return;
-
-      const reservedUntil = data.reserved_until
-        ? new Date(data.reserved_until).getTime()
-        : null;
-
-      const now = Date.now();
-
-      const isLocked =
-        data.sold ||
-        (reservedUntil !== null && reservedUntil > now);
-
-      setLocked(isLocked);
-      onLockChange?.(isLocked);
-    } catch (e) {
-      console.error("status poll error", e);
-    }
-  }
+export function ItemLiveStatusWatcher({ itemId }: Props) {
+  const [status, setStatus] = useState<StatusPayload | null>(null);
 
   useEffect(() => {
-    check();
-    const i = setInterval(check, 3000);
-    return () => clearInterval(i);
-  }, []);
+    let cancelled = false;
 
-  if (!locked) return null;
+    async function fetchStatus() {
+      try {
+        const res = await fetch(`/api/items/${itemId}/status`, {
+          cache: "no-store",
+        });
 
-  return (
-    <div className="rounded-xl bg-rose-500/10 border border-rose-500/40 text-rose-300 text-xs px-3 py-2">
-      🔒 Dette piece er i checkout af en anden bruger lige nu.
-    </div>
-  );
+        if (!res.ok) {
+          return;
+        }
+
+        const data = (await res.json()) as StatusPayload;
+
+        if (!cancelled) {
+          setStatus(data);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          // vi ignorerer fejl her – UI skal bare være "best effort"
+          console.error("ItemLiveStatusWatcher error", err);
+        }
+      }
+    }
+
+    // første fetch
+    fetchStatus();
+
+    // poll fx hver 3. sekund
+    const intervalId = setInterval(fetchStatus, 3000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(intervalId);
+    };
+  }, [itemId]);
+
+  if (!status) return null;
+
+  const now = Date.now();
+
+  const hasActiveReservation =
+    !status.sold &&
+    !!status.reserved_until &&
+    new Date(status.reserved_until).getTime() > now;
+
+  // 1) Solgt – hård lock
+  if (status.sold) {
+    return (
+      <div className="mb-2 flex items-center gap-2 rounded-xl border border-rose-500/60 bg-rose-500/10 px-3 py-2 text-[11px] text-rose-100">
+        <span className="inline-block h-2 w-2 rounded-full bg-rose-400" />
+        <span>Denne vare er allerede solgt.</span>
+      </div>
+    );
+  }
+
+  // 2) Midlertidigt låst af en anden (checkout i gang)
+  if (hasActiveReservation) {
+    return (
+      <div className="mb-2 flex items-center gap-2 rounded-xl border border-amber-500/60 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100">
+        <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-amber-300" />
+        <span>
+          En anden er lige nu i gang med at checke ud. Hvis de ikke når at betale, låses varen op igen.
+        </span>
+      </div>
+    );
+  }
+
+  // 3) Ingen aktiv reservation / ikke solgt → vis ingenting
+  return null;
 }
