@@ -15,15 +15,19 @@ import { ItemLiveStatusWatcher } from "./ItemLiveStatusWatcher";
 
 type Props = { params: { id: string } };
 
+type DropMode = "live" | "upcoming" | "expired";
+
 export async function generateMetadata({ params }: Props) {
   const item = await getItemById(params.id);
   if (!item) return {};
 
   const drop = item.dropId ? await getDropById(item.dropId) : null;
-  if (!drop || !drop.isLive) {
+  if (!drop) {
+    // Ingen drop → ingen metadata
     return {};
   }
 
+  // Simpelt: samme title/desc uanset mode
   return {
     title: `${item.title} – DRIPDROPS`,
     description: `${item.designer ?? ""} ${item.brand ?? ""}`.trim(),
@@ -36,43 +40,39 @@ export default async function ItemPage({ params }: Props) {
 
   const drop = item.dropId ? await getDropById(item.dropId) : null;
 
-  // 🔒 Kun items i aktivt drop må være public
-  if (!drop || !drop.isLive) {
+  // Hvis varen ikke tilhører et drop, viser vi den ikke
+  if (!drop) {
     notFound();
   }
 
-  type DropMode = "live" | "upcoming" | "expired";
+  // Bestem drop-mode: live / upcoming / expired
   let mode: DropMode = "live";
 
-  if (drop) {
-    if (drop.isLive) {
-      mode = "live";
-    } else if (drop.starts_at) {
-      const starts = new Date(drop.starts_at);
-      const now = new Date();
-      mode = starts.getTime() > now.getTime() ? "upcoming" : "expired";
-    } else {
-      mode = "expired";
-    }
+  if (drop.isLive) {
+    mode = "live";
+  } else if (drop.starts_at) {
+    const starts = new Date(drop.starts_at);
+    const now = new Date();
+    mode = starts.getTime() > now.getTime() ? "upcoming" : "expired";
+  } else {
+    mode = "expired";
   }
 
   const priceLabel = `${item.price.toLocaleString("da-DK")} kr`;
   const marketLabel =
     item.marketMin && item.marketMax
-      ? `${item.marketMin.toLocaleString("da-DK")}–${item.marketMax.toLocaleString(
+      ? `${item.marketMin.toLocaleString(
           "da-DK"
-        )} kr`
+        )}–${item.marketMax.toLocaleString("da-DK")} kr`
       : null;
 
   let dropStatusLabel: string | null = null;
-  if (drop) {
-    if (mode === "live") {
-      dropStatusLabel = "Live drop";
-    } else if (mode === "upcoming" && drop.startsAtLabel) {
-      dropStatusLabel = `Starter ${drop.startsAtLabel}`;
-    } else if (mode === "expired") {
-      dropStatusLabel = `Drop #${drop.sequence} er slut`;
-    }
+  if (mode === "live") {
+    dropStatusLabel = "Live drop";
+  } else if (mode === "upcoming" && drop.startsAtLabel) {
+    dropStatusLabel = `Starter ${drop.startsAtLabel}`;
+  } else if (mode === "expired") {
+    dropStatusLabel = `Drop #${drop.sequence} er slut`;
   }
 
   let pricePositionLabel: string | null = null;
@@ -495,7 +495,7 @@ export default async function ItemPage({ params }: Props) {
         startsAt={drop?.starts_at ?? null}
       />
 
-      {/* Mobil sticky CTA – stadig ikke koblet på reservation-API */}
+      {/* Mobil sticky CTA – håndterer selv mode-logik i komponenten */}
       <ItemCtaTracker
         eventName="dd_item_cta_click"
         label="sticky_cta_mobile"
