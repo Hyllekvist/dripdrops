@@ -27,21 +27,19 @@ export async function POST(req: NextRequest) {
     const expiresAt = new Date(now.getTime() + 2 * 60 * 1000).toISOString();
 
     // Atomar UPDATE:
-    //  - item skal matche id
-    //  - må IKKE være solgt
-    //  - må enten ikke have reserved_until
-    //    eller reserved_until skal være i fortiden
+    //  - id skal matche
+    //  - item må enten ikke være reserveret,
+    //    eller reservationen skal være udløbet
     const { data, error } = await supabase
       .from("items")
       .update({ reserved_until: expiresAt })
       .eq("id", itemId)
-      .eq("sold", false)
       .or(`reserved_until.is.null,reserved_until.lt.${nowIso}`)
       .select("id, reserved_until")
       .single();
 
     if (error) {
-      // PGRST116 = no rows returned (dvs. ingen match på betingelserne)
+      // ingen rækker matchet = nogen andre har den stadig låst
       if ((error as any).code === "PGRST116") {
         return NextResponse.json(
           { ok: false, error: "already_reserved_or_sold" },
@@ -56,7 +54,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Succes – vi har reserveret varen
     return NextResponse.json(
       {
         ok: true,
