@@ -1,3 +1,4 @@
+// components/ReserveAndCheckoutButton.tsx
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -33,8 +34,9 @@ export function ReserveAndCheckoutButton({ itemId, label }: Props) {
         return;
       }
 
-      // Success → videre til checkout med aktiv 2-minutters reservation
-      router.push(`/checkout/${itemId}`);
+      // send reserved_until med som query-param
+      const expires = encodeURIComponent(data.reserved_until);
+      router.push(`/checkout/${itemId}?expires=${expires}`);
     } catch (err) {
       console.error("ReserveAndCheckoutButton error:", err);
       alert("Teknisk fejl – prøv igen om lidt.");
