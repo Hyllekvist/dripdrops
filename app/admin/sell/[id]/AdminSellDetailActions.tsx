@@ -1,175 +1,218 @@
-// app/admin/sell/[id]/AdminSellDetailActions.tsx
-"use client";
+// app/admin/sell/[id]/page.tsx
+export const dynamic = "force-dynamic";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { createClient } from "@supabase/supabase-js";
+import { AdminSellDetailActions } from "./AdminSellDetailActions";
 
-type AdminStatus = "pending" | "approved" | "rejected";
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
-type Props = {
+type SubmissionDetail = {
   id: string;
-  status: AdminStatus;
-  itemId: string | null;
+  created_at: string;
+  title: string;
+  brand: string | null;
+  price_idea: number | null;
+  email: string;
+  condition: string | null;
+  status: string; // raw fra DB
+  image_count: number;
+  image_urls: unknown;
+  item_id: string | null;
 };
 
-export function AdminSellDetailActions({ id, status, itemId }: Props) {
-  const router = useRouter();
+export const metadata = {
+  title: "Sell submission · Admin – DRIPDROPS",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
-  const [localStatus, setLocalStatus] = useState<AdminStatus>(status);
-  const [localItemId, setLocalItemId] = useState<string | null>(itemId);
-  const [loadingStatus, setLoadingStatus] = useState<
-    "approved" | "rejected" | null
-  >(null);
-  const [creatingItem, setCreatingItem] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+type Props = { params: { id: string } };
 
-  async function updateStatus(nextStatus: AdminStatus) {
-    if (nextStatus === localStatus) return;
+export default async function AdminSellDetailPage({ params }: Props) {
+  const { data, error } = await supabase
+    .from("sell_submissions")
+    .select(
+      "id, created_at, title, brand, price_idea, email, condition, status, image_count, image_urls, item_id"
+    )
+    .eq("id", params.id)
+    .single();
 
-    setError(null);
-
-    // Vi har kun API-endpoints for approved / rejected
-    if (nextStatus !== "approved" && nextStatus !== "rejected") return;
-
-    setLoadingStatus(nextStatus);
-
-    const endpoint =
-      nextStatus === "approved"
-        ? "/api/admin/sell/approve"
-        : "/api/admin/sell/reject";
-
-    try {
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
-
-      const data = await res.json().catch(() => null);
-
-      if (!res.ok) {
-        throw new Error(data?.error || "Ukendt fejl fra API");
-      }
-
-      const newStatus: AdminStatus =
-        data?.newStatus && ["pending", "approved", "rejected"].includes(data.newStatus)
-          ? data.newStatus
-          : nextStatus;
-
-      setLocalStatus(newStatus);
-      router.refresh();
-    } catch (err: any) {
-      console.error("Admin status update error:", err);
-      setError(err.message || "Kunne ikke opdatere status.");
-    } finally {
-      setLoadingStatus(null);
-    }
+  if (error || !data) {
+    console.error(error);
+    notFound();
   }
 
-  async function createItem() {
-    // Kun hvis godkendt og der ikke allerede findes et item
-    if (localItemId || localStatus !== "approved") return;
+  const s = data as SubmissionDetail;
+  const imageUrls: string[] = Array.isArray(s.image_urls)
+    ? (s.image_urls as string[])
+    : [];
 
-    setError(null);
-    setCreatingItem(true);
+  // Normalisér status til den union-type, AdminSellDetailActions forventer
+  const allowedStatuses = ["pending", "approved", "rejected"] as const;
+  type AdminStatus = (typeof allowedStatuses)[number];
 
-    try {
-      const res = await fetch("/api/admin/sell/create-item", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
+  const normalizedStatus: AdminStatus = allowedStatuses.includes(
+    s.status as AdminStatus
+  )
+    ? (s.status as AdminStatus)
+    : "pending";
 
-      const data = await res.json().catch(() => null);
+  // (valgfrit) lidt pænere status-pill styling
+  let statusLabel = normalizedStatus;
+  let statusClasses =
+    "inline-flex rounded-full bg-slate-900 px-3 py-1 text-[11px] text-slate-200";
 
-      if (!res.ok) {
-        throw new Error(data?.error || "Ukendt fejl fra create-item API");
-      }
-
-      if (data?.itemId) {
-        setLocalItemId(data.itemId as string);
-      }
-
-      router.refresh();
-    } catch (err: any) {
-      console.error("Create item error:", err);
-      setError(err.message || "Kunne ikke oprette item.");
-    } finally {
-      setCreatingItem(false);
-    }
+  if (normalizedStatus === "pending") {
+    statusLabel = "Pending";
+    statusClasses =
+      "inline-flex rounded-full bg-slate-900 px-3 py-1 text-[11px] text-slate-200";
+  } else if (normalizedStatus === "approved") {
+    statusLabel = "Approved";
+    statusClasses =
+      "inline-flex rounded-full bg-emerald-500/15 border border-emerald-400/70 px-3 py-1 text-[11px] font-medium text-emerald-300";
+  } else if (normalizedStatus === "rejected") {
+    statusLabel = "Rejected";
+    statusClasses =
+      "inline-flex rounded-full bg-rose-500/15 border border-rose-400/70 px-3 py-1 text-[11px] font-medium text-rose-200";
   }
 
   return (
-    <div className="space-y-3">
-      <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
-        Handlinger
-      </div>
+    <div className="mx-auto max-w-5xl px-4 pb-16 pt-8 space-y-6">
+      <div className="flex items-center justify-between gap-3">
+        <div className="space-y-1">
+          <Link
+            href="/admin/sell"
+            className="text-xs text-slate-500 hover:text-slate-300"
+          >
+            ← Tilbage til submissions
+          </Link>
 
-      {/* Status-knapper */}
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          disabled={loadingStatus !== null || localStatus === "approved"}
-          onClick={() => updateStatus("approved")}
-          className="rounded-full bg-emerald-500 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-950 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {loadingStatus === "approved"
-            ? "Godkender…"
-            : localStatus === "approved"
-            ? "Godkendt"
-            : "Godkend submission"}
-        </button>
+          <h1 className="text-xl font-semibold text-slate-50">
+            Sell submission
+          </h1>
 
-        <button
-          type="button"
-          disabled={loadingStatus !== null || localStatus === "rejected"}
-          onClick={() => updateStatus("rejected")}
-          className="rounded-full border border-rose-500/70 bg-rose-500/10 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-rose-200 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {loadingStatus === "rejected"
-            ? "Afviser…"
-            : localStatus === "rejected"
-            ? "Afvist"
-            : "Afvis submission"}
-        </button>
-      </div>
+          <p className="text-xs text-slate-500">
+            Oprettet{" "}
+            {new Date(s.created_at).toLocaleString("da-DK", {
+              dateStyle: "short",
+              timeStyle: "short",
+            })}
+          </p>
+        </div>
 
-      <p className="text-[11px] text-slate-500">
-        Aktuel status (client):{" "}
-        <span className="font-semibold">{localStatus}</span>
-      </p>
-
-      {/* Item-oprettelse */}
-      {localStatus === "approved" && (
-        <div className="space-y-2 border-t border-slate-800 pt-2">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
-            Item
+        <div className="space-y-2 text-right text-xs">
+          <div>
+            <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
+              Status
+            </div>
+            <div className={statusClasses}>{statusLabel}</div>
           </div>
 
-          {localItemId ? (
-            <p className="text-[11px] text-emerald-300">
-              Item oprettet for denne submission.{" "}
-              <a
-                href={`/admin/items/${localItemId}`}
+          {s.item_id && (
+            <div className="text-[11px] text-emerald-300">
+              Item oprettet →{" "}
+              <Link
+                href={`/admin/items/${s.item_id}`}
                 className="underline hover:text-emerald-200"
               >
                 Åbn item-admin
-              </a>
-            </p>
-          ) : (
-            <button
-              type="button"
-              onClick={createItem}
-              disabled={creatingItem}
-              className="rounded-full border border-slate-600 bg-slate-900 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {creatingItem ? "Opretter item…" : "Opret item i items-tabellen"}
-            </button>
+              </Link>
+            </div>
           )}
-        </div>
-      )}
 
-      {error && <p className="text-[11px] text-rose-400">Fejl: {error}</p>}
+          <div className="text-[11px] text-slate-400">{s.email}</div>
+        </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.9fr)] lg:items-start">
+        {/* Billeder + basic info */}
+        <section className="space-y-4 rounded-2xl border border-slate-800 bg-slate-950/85 p-4">
+          <div className="space-y-1">
+            <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+              Item
+            </div>
+            <h2 className="text-lg font-semibold text-slate-50">
+              {s.title}
+            </h2>
+            <p className="text-sm text-slate-400">
+              {s.brand || "Ukendt brand"}
+            </p>
+            <p className="text-xs text-slate-500">
+              Stand: {s.condition || "Ikke angivet"}
+            </p>
+          </div>
+
+          {imageUrls.length > 0 ? (
+            <div className="space-y-3">
+              <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-950">
+                <img
+                  src={imageUrls[0]}
+                  alt={s.title}
+                  className="h-64 w-full object-cover"
+                />
+              </div>
+
+              {imageUrls.length > 1 && (
+                <div className="flex flex-wrap gap-2">
+                  {imageUrls.slice(1).map((url) => (
+                    <img
+                      key={url}
+                      src={url}
+                      alt={s.title}
+                      className="h-20 w-20 rounded-xl border border-slate-800 object-cover"
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-xs text-slate-500">
+              Ingen billeder uploadet til denne submission.
+            </p>
+          )}
+        </section>
+
+        {/* Admin-panel: pris, kontakt, actions */}
+        <section className="space-y-4 rounded-2xl border border-slate-800 bg-slate-950/85 p-4 text-sm">
+          <div className="space-y-2">
+            <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+              Prisidé & kontakt
+            </div>
+
+            <div className="space-y-1">
+              <div className="text-xs text-slate-500">Prisidé</div>
+              <div className="text-base text-slate-50">
+                {s.price_idea
+                  ? `${s.price_idea.toLocaleString("da-DK")} kr`
+                  : "Ikke angivet"}
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <div className="text-xs text-slate-500">Email</div>
+              <div className="text-xs text-slate-200">{s.email}</div>
+            </div>
+          </div>
+
+          <AdminSellDetailActions
+            id={s.id}
+            status={normalizedStatus}
+            itemId={s.item_id}
+          />
+
+          <div className="border-t border-slate-800 pt-2 text-[11px] text-slate-500">
+            Når du godkender, opretter vi et rigtigt item i{" "}
+            <code>items</code>-tabellen og linker det til denne submission.
+          </div>
+        </section>
+      </div>
     </div>
   );
 }
