@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type CheckoutStatus = "ok" | "expired" | "missing" | "sold";
 
@@ -20,6 +21,8 @@ export function CheckoutClient({
   reservedUntil,
   initialStatus,
 }: Props) {
+  const router = useRouter();
+
   const [status, setStatus] = useState<LocalStatus>(initialStatus);
   const [remainingMs, setRemainingMs] = useState<number | null>(null);
 
@@ -49,6 +52,17 @@ export function CheckoutClient({
     return () => clearInterval(id);
   }, [reservedUntil, initialStatus]);
 
+  // Auto-redirect tilbage til varen, hvis reservationen er død / varen solgt
+  useEffect(() => {
+    if (status === "expired" || status === "sold" || status === "missing") {
+      const timeout = setTimeout(() => {
+        router.push(`/item/${itemId}`);
+      }, 4000); // 4 sekunder til at læse beskeden
+
+      return () => clearTimeout(timeout);
+    }
+  }, [status, router, itemId]);
+
   const countdownLabel = useMemo(() => {
     if (status !== "ok" || remainingMs == null) return null;
     const totalSec = Math.floor(remainingMs / 1000);
@@ -75,19 +89,19 @@ export function CheckoutClient({
   } else if (status === "expired") {
     bannerTitle = "Reservationen er udløbet";
     bannerBody =
-      "Din reservation er udløbet. Prøv at gå tilbage til varen og se, om den stadig er tilgængelig.";
+      "Din reservation er udløbet. Vi sender dig tilbage til varen, så du kan se, om den stadig er tilgængelig.";
     bannerStyle =
       "border-amber-500/40 bg-amber-500/10 text-amber-50";
   } else if (status === "missing") {
     bannerTitle = "Ingen aktiv reservation";
     bannerBody =
-      "Vi kunne ikke finde en aktiv reservation på denne vare. Det kan være, at den ikke er låst til dig længere.";
+      "Vi kunne ikke finde en aktiv reservation på denne vare. Det kan være, at den ikke er låst til dig længere. Du sendes tilbage til varen om et øjeblik.";
     bannerStyle =
       "border-amber-500/40 bg-amber-500/10 text-amber-50";
   } else if (status === "sold") {
     bannerTitle = "Varen er allerede solgt";
     bannerBody =
-      "Varen blev solgt, før du nåede at gennemføre checkout. Hold øje med kommende drops for lignende pieces.";
+      "Varen blev solgt, før du nåede at gennemføre checkout. Vi sender dig tilbage til varen, så du kan tjekke droppet eller finde lignende pieces.";
     bannerStyle = "border-slate-500/40 bg-slate-800/60 text-slate-50";
   }
 
@@ -109,6 +123,17 @@ export function CheckoutClient({
               {bannerTitle}
             </p>
             <p className="mt-1 text-[11px] opacity-90">{bannerBody}</p>
+            {(status === "expired" ||
+              status === "missing" ||
+              status === "sold") && (
+              <button
+                type="button"
+                onClick={() => router.push(`/item/${itemId}`)}
+                className="mt-1 text-[11px] underline underline-offset-2"
+              >
+                Gå tilbage til varen nu
+              </button>
+            )}
           </div>
 
           {status === "ok" && countdownLabel && (
