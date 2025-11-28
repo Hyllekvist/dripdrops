@@ -1,3 +1,4 @@
+// app/item/[id]/page.tsx
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getItemById } from "@/lib/items";
@@ -9,6 +10,7 @@ import { ItemMobileStickyCta } from "@/components/ItemMobileStickyCta";
 import { ItemTrackingClient } from "./ItemTrackingClient";
 import { ItemCtaTracker } from "./ItemCtaTracker";
 import { ItemDesktopTopBarCta } from "./ItemDesktopTopBarCta";
+import { ReserveAndCheckoutButton } from "./ReserveAndCheckoutButton";
 
 type Props = { params: { id: string } };
 
@@ -16,7 +18,6 @@ export async function generateMetadata({ params }: Props) {
   const item = await getItemById(params.id);
   if (!item) return {};
 
-  // Kun metadata hvis item hører til et live drop
   const drop = item.dropId ? await getDropById(item.dropId) : null;
   if (!drop || !drop.isLive) {
     return {};
@@ -34,7 +35,7 @@ export default async function ItemPage({ params }: Props) {
 
   const drop = item.dropId ? await getDropById(item.dropId) : null;
 
-  // 🔒 Synlighedsregel: kun items i et aktivt drop må være public
+  // 🔒 Kun items i aktivt drop må være public
   if (!drop || !drop.isLive) {
     notFound();
   }
@@ -58,7 +59,7 @@ export default async function ItemPage({ params }: Props) {
   const marketLabel =
     item.marketMin && item.marketMax
       ? `${item.marketMin.toLocaleString(
-          "da-DK",
+          "da-DK"
         )}–${item.marketMax.toLocaleString("da-DK")} kr`
       : null;
 
@@ -118,7 +119,7 @@ export default async function ItemPage({ params }: Props) {
       "Denne vare er allerede røget. Brug kommende drops til at finde lignende pieces.";
   }
 
-  // FOMO dummy (stadig ok for nu)
+  // FOMO dummy
   const reminderCount = 37;
   const viewerCount = mode === "live" ? 12 : 0;
   const lastSimilarDropSeconds = 18;
@@ -293,12 +294,10 @@ export default async function ItemPage({ params }: Props) {
                     dropId={drop?.id ?? null}
                     mode={mode}
                   >
-                    <Link
-                      href={`/checkout/${item.id}`}
-                      className="block w-full rounded-full bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-950"
-                    >
-                      {primaryCtaLabel}
-                    </Link>
+                    <ReserveAndCheckoutButton
+                      itemId={item.id}
+                      label={primaryCtaLabel}
+                    />
                   </ItemCtaTracker>
                 )}
 
@@ -372,7 +371,7 @@ export default async function ItemPage({ params }: Props) {
 
             {/* Drip Data */}
             <div className="space-y-3 rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex items=center justify-between gap-2">
                 <p className="text-sm font-semibold text-slate-50">Drip Data</p>
                 <span className="rounded-full bg-slate-950 px-2.5 py-1 text-[11px] text-slate-300">
                   Markedsindsigt
@@ -465,11 +464,15 @@ export default async function ItemPage({ params }: Props) {
 
             {/* Description */}
             <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
-              <p className="text-sm font-semibold text-slate-50">Beskrivelse</p>
+              <p className="text-sm font-semibold text-slate-50">
+                Beskrivelse
+              </p>
               <p className="whitespace-pre-line text-[13px] leading-relaxed text-slate-200">
                 {item.description}
               </p>
-              <p className="pt-1 text-[11px] text-slate-500">{scarcityFooter}</p>
+              <p className="pt-1 text-[11px] text-slate-500">
+                {scarcityFooter}
+              </p>
             </div>
           </section>
         </div>
@@ -488,7 +491,7 @@ export default async function ItemPage({ params }: Props) {
         startsAt={drop?.starts_at ?? null}
       />
 
-      {/* Mobil sticky CTA – stadig uden direkte checkout-kobling */}
+      {/* Mobil sticky CTA – stadig ikke koblet på reservation-API */}
       <ItemCtaTracker
         eventName="dd_item_cta_click"
         label="sticky_cta_mobile"
