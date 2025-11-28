@@ -17,6 +17,12 @@ export async function generateMetadata({ params }: Props) {
   const item = await getItemById(params.id);
   if (!item) return {};
 
+  // Kun metadata hvis item hører til et live drop
+  const drop = item.dropId ? await getDropById(item.dropId) : null;
+  if (!drop || !drop.isLive) {
+    return {};
+  }
+
   return {
     title: `${item.title} – DRIPDROPS`,
     description: `${item.designer ?? ""} ${item.brand ?? ""}`.trim(),
@@ -28,6 +34,11 @@ export default async function ItemPage({ params }: Props) {
   if (!item) notFound();
 
   const drop = item.dropId ? await getDropById(item.dropId) : null;
+
+  // 🔒 Synlighedsregel: kun items i et aktivt drop må være public
+  if (!drop || !drop.isLive) {
+    notFound();
+  }
 
   type DropMode = "live" | "upcoming" | "expired";
   let mode: DropMode = "live";
