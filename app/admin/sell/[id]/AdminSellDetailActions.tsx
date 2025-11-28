@@ -1,18 +1,21 @@
+// app/admin/sell/[id]/AdminSellDetailActions.tsx
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+type AdminStatus = "pending" | "approved" | "rejected";
+
 type Props = {
   id: string;
-  status: string;
+  status: AdminStatus;
   itemId: string | null;
 };
 
 export function AdminSellDetailActions({ id, status, itemId }: Props) {
   const router = useRouter();
 
-  const [localStatus, setLocalStatus] = useState(status);
+  const [localStatus, setLocalStatus] = useState<AdminStatus>(status);
   const [localItemId, setLocalItemId] = useState<string | null>(itemId);
   const [loadingStatus, setLoadingStatus] = useState<
     "approved" | "rejected" | null
@@ -20,8 +23,14 @@ export function AdminSellDetailActions({ id, status, itemId }: Props) {
   const [creatingItem, setCreatingItem] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function updateStatus(nextStatus: "approved" | "rejected") {
+  async function updateStatus(nextStatus: AdminStatus) {
+    if (nextStatus === localStatus) return;
+
     setError(null);
+
+    // Vi har kun API-endpoints for approved / rejected
+    if (nextStatus !== "approved" && nextStatus !== "rejected") return;
+
     setLoadingStatus(nextStatus);
 
     const endpoint =
@@ -42,7 +51,11 @@ export function AdminSellDetailActions({ id, status, itemId }: Props) {
         throw new Error(data?.error || "Ukendt fejl fra API");
       }
 
-      const newStatus = data?.newStatus ?? nextStatus;
+      const newStatus: AdminStatus =
+        data?.newStatus && ["pending", "approved", "rejected"].includes(data.newStatus)
+          ? data.newStatus
+          : nextStatus;
+
       setLocalStatus(newStatus);
       router.refresh();
     } catch (err: any) {
@@ -54,6 +67,7 @@ export function AdminSellDetailActions({ id, status, itemId }: Props) {
   }
 
   async function createItem() {
+    // Kun hvis godkendt og der ikke allerede findes et item
     if (localItemId || localStatus !== "approved") return;
 
     setError(null);
@@ -127,14 +141,20 @@ export function AdminSellDetailActions({ id, status, itemId }: Props) {
 
       {/* Item-oprettelse */}
       {localStatus === "approved" && (
-        <div className="pt-2 border-t border-slate-800 space-y-2">
+        <div className="space-y-2 border-t border-slate-800 pt-2">
           <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
             Item
           </div>
 
           {localItemId ? (
             <p className="text-[11px] text-emerald-300">
-              Item oprettet for denne submission.
+              Item oprettet for denne submission.{" "}
+              <a
+                href={`/admin/items/${localItemId}`}
+                className="underline hover:text-emerald-200"
+              >
+                Åbn item-admin
+              </a>
             </p>
           ) : (
             <button
@@ -149,11 +169,7 @@ export function AdminSellDetailActions({ id, status, itemId }: Props) {
         </div>
       )}
 
-      {error && (
-        <p className="text-[11px] text-rose-400">
-          Fejl: {error}
-        </p>
-      )}
+      {error && <p className="text-[11px] text-rose-400">Fejl: {error}</p>}
     </div>
   );
 }
