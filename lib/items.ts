@@ -60,12 +60,13 @@ function mapRowToItem(row: ItemRow): UIItem {
     marketMax: row.market_max,
     aiAuthenticity: row.ai_authenticity ?? 0,
     description: row.description,
-    // drop sættes kun i getItemById, så her lader vi den være undefined
+    // drop sættes kun i getItemById / getPublicItemById
   };
 }
 
 /**
  * Hent alle items for et givent drop-id
+ * (admin / generel brug – ingen synlighedsfilter)
  */
 export async function listItemsForDrop(dropId: string): Promise<UIItem[]> {
   const supabase = supabaseServer();
@@ -87,6 +88,7 @@ export async function listItemsForDrop(dropId: string): Promise<UIItem[]> {
 
 /**
  * Hent enkelt item efter id – inkl. tilknyttet drop
+ * ADMIN / intern brug – ingen synlighedsfilter
  */
 export async function getItemById(id: string): Promise<UIItem | null> {
   const supabase = supabaseServer();
@@ -114,9 +116,50 @@ export async function getItemById(id: string): Promise<UIItem | null> {
     return null;
   }
 
-  // data har nu både item-felter og et nested "drops"
   const row = data as ItemRow & { drops: UIDropForItem | null };
+  const base = mapRowToItem(row);
 
+  return {
+    ...base,
+    drop: row.drops ?? null,
+  };
+}
+
+/**
+ * PUBLIC: Hent item kun hvis det ligger i et LIVE drop
+ * Bruges til public routes som /item/[id]
+ */
+export async function getPublicItemById(
+  id: string,
+): Promise<UIItem | null> {
+  const supabase = supabaseServer();
+
+  const { data, error } = await supabase
+    .from("items")
+    .select(
+      `
+      *,
+      drops!inner (
+        id,
+        title,
+        sequence,
+        is_live,
+        starts_at,
+        ends_at
+      )
+    `
+    )
+    .eq("id", id)
+    // kun items som har et tilknyttet drop der er live
+    .eq("drops.is_live", true)
+    .maybeSingle();
+
+  if (error || !data) {
+    if (error) console.error("getPublicItemById error", error);
+    return null;
+  }
+
+  const row = data as ItemRow & { drops: UIDropForItem | null };
   const base = mapRowToItem(row);
 
   return {
