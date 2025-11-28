@@ -1,5 +1,4 @@
-// app/api/reservations/route.ts
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -7,75 +6,82 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// Reservationstid i sekunder
-const RESERVE_SECONDS = 120;
-
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const { itemId } = await req.json();
+    const body = await req.json().catch(() => null) as { itemId?: string } | null;
 
-    if (!itemId || typeof itemId !== "string") {
+    const itemId = body?.itemId;
+    if (!itemId) {
       return NextResponse.json(
-        { error: "missing_item_id" },
+        { ok: false, error: "missing_item_id" },
         { status: 400 }
       );
     }
 
-    const now = new Date();
-    const nowIso = now.toISOString();
-    const reservedUntil = new Date(
-      now.getTime() + RESERVE_SECONDS * 1000
-    ).toISOString();
-
-    // ÉN atomar opdatering:
-    // - kun hvis item matcher id
-    // - kun hvis sold = false
-    // - kun hvis reserved_until er NULL ELLER udløbet
-    const { data, error } = await supabase
+    // 1) Hent item
+    const { data: item, error: itemErr } = await supabase
       .from("items")
-      .update({
-        reserved_until: reservedUntil,
-        // her kan vi senere sætte reserved_by til user-id / session-id
-      })
+      .select("id, reserved_until, sold")
       .eq("id", itemId)
-      .eq("sold", false)
-      .or(`reserved_until.is.null,reserved_until.lt.${nowIso}`)
-      .select("id, reserved_until")
       .single();
 
-    // Hvis ingen række blev opdateret, tolker PostgREST det som fejl med code PGRST116
-    if (error) {
-      // PGRST116 = no rows found efter update med return=representation
-      if ((error as any).code === "PGRST116") {
-        return NextResponse.json(
-          { error: "already_reserved_or_sold" },
-          { status: 409 }
-        );
-      }
-
-      console.error("Reservation update error:", error);
+    if (itemErr || !item) {
+      console.error("reservations: itemErr", itemErr);
       return NextResponse.json(
-        { error: "server_error" },
-        { status: 500 }
+        { ok: false, error: "item_not_found" },
+        { status: 404 }
       );
     }
 
-    if (!data) {
-      // defensivt fallback – burde ikke ske, men så behandler vi det som 409
+    const now = new Date();
+
+    // 2) Tjek om den ER sold / aktivt reserveret
+    if (item.sold) {
       return NextResponse.json(
-        { error: "already_reserved_or_sold" },
+        { ok: false, error: "already_reserved_or_sold" },
         { status: 409 }
+      );
+    }
+
+    if (item.reserved_until && new Date(item.reserved_until) > now) {
+      // stadig inde i gammel reservation
+      return NextResponse.json(
+        { ok: false, error: "already_reserved_or_sold" },
+        { status: 409 }
+      );
+    }
+
+    // 3) Sæt ny reservation 2 minutter frem
+    const expiresAt = new Date(now.getTime() + 2 * 60 * 1000);
+
+    const { data: updated, error: updErr } = await supabase
+      .from("items")
+      .update({
+        reserved_until: expiresAt.toISOString(),
+        // reserved_by kan du tilføje senere
+      })
+      .eq("id", itemId)
+      .select("id, reserved_until")
+      .single();
+
+    if (updErr || !updated) {
+      console.error("reservations: updErr", updErr);
+      return NextResponse.json(
+        { ok: false, error: "server_error" },
+        { status: 500 }
       );
     }
 
     return NextResponse.json({
       ok: true,
-      reservedUntil: data.reserved_until,
+      itemId: updated.id,
+      reserved_until: updated.reserved_until,
+      ttl_seconds: 120,
     });
   } catch (err) {
-    console.error("Reservation API crash:", err);
+    console.error("reservations: unexpected", err);
     return NextResponse.json(
-      { error: "server_error" },
+      { ok: false, error: "server_error" },
       { status: 500 }
     );
   }
