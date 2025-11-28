@@ -1,57 +1,57 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+
+export const runtime = "nodejs";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const body = await req.json().catch(() => null);
-    const itemId = body?.itemId as string | undefined;
+    const { itemId } = await req.json();
 
-    if (!itemId) {
+    if (!itemId || typeof itemId !== "string") {
       return NextResponse.json(
-        { error: "Missing itemId" },
+        { error: "Mangler gyldigt itemId" },
         { status: 400 }
       );
     }
 
     const now = new Date();
     const nowIso = now.toISOString();
-    const expires = new Date(now.getTime() + 2 * 60 * 1000); // 2 min
-    const expiresIso = expires.toISOString();
-    const token = crypto.randomUUID();
+    const inTwoMinutesIso = new Date(
+      now.getTime() + 2 * 60 * 1000
+    ).toISOString();
 
-    // Atomic UPDATE: kun hvis ikke solgt OG ingen aktiv reservation
+    // Atomisk update:
+    // - kun hvis sold = false
+    // - OG (reserved_until IS NULL ELLER reserved_until < nu)
     const { data, error } = await supabase
       .from("items")
-      .update({
-        reserved_until: expiresIso,
-        reserved_by: token,
-      })
+      .update({ reserved_until: inTwoMinutesIso })
       .eq("id", itemId)
       .eq("sold", false)
       .or(`reserved_until.is.null,reserved_until.lt.${nowIso}`)
       .select("id, reserved_until")
-      .maybeSingle();
+      .single();
 
     if (error) {
-      console.error("Reservation error", error);
+      console.error("Reservation update error:", error);
       return NextResponse.json(
-        { error: "Kunne ikke reservere varen lige nu." },
+        { error: "Kunne ikke reservere varen (serverfejl)" },
         { status: 500 }
       );
     }
 
+    // Hvis ingen række matcher betingelserne, er den enten solgt
+    // eller stadig reserveret af en anden.
     if (!data) {
-      // Ingen række opdateret = allerede reserveret/solgt
       return NextResponse.json(
         {
-          ok: false,
           error:
-            "Varen er allerede reserveret eller solgt. Prøv at refreshe siden.",
+            "Varen er allerede reserveret af en anden eller solgt. Prøv igen om lidt.",
         },
         { status: 409 }
       );
@@ -59,14 +59,12 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       ok: true,
-      itemId,
-      token,
-      expiresAt: expiresIso,
+      reservedUntil: data.reserved_until,
     });
   } catch (err) {
-    console.error("Reservation API error", err);
+    console.error("Reservation API error:", err);
     return NextResponse.json(
-      { error: "Uventet serverfejl ved reservation." },
+      { error: "Uventet fejl i reservation-API" },
       { status: 500 }
     );
   }
