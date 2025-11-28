@@ -1,5 +1,3 @@
-// app/admin/sell/page.tsx
-import Link from "next/link";
 import { createClient } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
@@ -17,9 +15,10 @@ type Submission = {
   price_idea: number | null;
   email: string;
   condition: string | null;
-  status: string;
+  status: "pending" | "approved" | "rejected" | string;
   image_count: number;
   image_urls: unknown;
+  item_id: string | null; // ← NY
 };
 
 export const metadata = {
@@ -34,7 +33,19 @@ export default async function AdminSellPage() {
   const { data, error } = await supabase
     .from("sell_submissions")
     .select(
-      "id, created_at, title, brand, price_idea, email, condition, status, image_count, image_urls"
+      `
+      id,
+      created_at,
+      title,
+      brand,
+      price_idea,
+      email,
+      condition,
+      status,
+      image_count,
+      image_urls,
+      item_id
+    `
     )
     .order("created_at", { ascending: false });
 
@@ -62,7 +73,7 @@ export default async function AdminSellPage() {
         </h1>
         <p className="text-sm text-slate-400">
           Indsendte varer til vurdering. Bruges til manuel screening og
-          evt. oprettelse i drops.
+          oprettelse i drops via items.
         </p>
       </header>
 
@@ -77,14 +88,33 @@ export default async function AdminSellPage() {
               ? (s.image_urls as string[])
               : [];
 
+            // Status-pill styling
+            let statusLabel = s.status;
+            let statusClasses =
+              "inline-flex rounded-full bg-slate-900 px-3 py-1 text-[11px] text-slate-200";
+
+            if (s.status === "pending") {
+              statusLabel = "Pending";
+              statusClasses =
+                "inline-flex rounded-full bg-slate-900 px-3 py-1 text-[11px] text-slate-200";
+            } else if (s.status === "approved") {
+              statusLabel = "Approved";
+              statusClasses =
+                "inline-flex rounded-full bg-emerald-500/15 border border-emerald-400/70 px-3 py-1 text-[11px] font-medium text-emerald-300";
+            } else if (s.status === "rejected") {
+              statusLabel = "Rejected";
+              statusClasses =
+                "inline-flex rounded-full bg-rose-500/15 border border-rose-400/70 px-3 py-1 text-[11px] font-medium text-rose-200";
+            }
+
             return (
-              <Link
+              <article
                 key={s.id}
-                href={`/admin/sell/${s.id}`}
-                className="block rounded-2xl border border-slate-800 bg-slate-950/85 p-4 text-sm transition hover:-translate-y-0.5 hover:border-slate-500 hover:bg-slate-900/90"
+                className="rounded-2xl border border-slate-800 bg-slate-950/85 p-4 text-sm"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="flex-1 min-w-[200px] space-y-1">
+                  {/* VENSTRE: Info + billeder */}
+                  <div className="flex-1 min-w-[220px] space-y-1">
                     <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
                       {new Date(s.created_at).toLocaleString("da-DK")}
                     </div>
@@ -113,7 +143,8 @@ export default async function AdminSellPage() {
                     )}
                   </div>
 
-                  <div className="text-right text-xs space-y-2 min-w-[150px]">
+                  {/* HØJRE: pris, status, item-link, kontakt */}
+                  <div className="text-right text-xs space-y-3 min-w-[180px]">
                     <div>
                       <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
                         Prisidé
@@ -125,26 +156,46 @@ export default async function AdminSellPage() {
                       </div>
                     </div>
 
-                    <div>
-                      <div className="mt-2 text-[10px] uppercase tracking-[0.18em] text-slate-500">
+                    <div className="space-y-1">
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
                         Status
                       </div>
-                      <div className="inline-flex rounded-full bg-slate-900 px-3 py-1 text-[11px] text-slate-200">
-                        {s.status}
-                      </div>
+                      <div className={statusClasses}>{statusLabel}</div>
+
+                      {/* Hvis der er oprettet et item, vis link */}
+                      {s.item_id && (
+                        <div className="text-[11px] text-emerald-300">
+                          Item oprettet →{" "}
+                          <a
+                            href={`/admin/items/${s.item_id}`}
+                            className="underline hover:text-emerald-200"
+                          >
+                            Åbn item-admin
+                          </a>
+                        </div>
+                      )}
                     </div>
 
                     <div>
-                      <div className="mt-2 text-[10px] uppercase tracking-[0.18em] text-slate-500">
+                      <div className="mt-1 text-[10px] uppercase tracking-[0.18em] text-slate-500">
                         Kontakt
                       </div>
                       <div className="text-[11px] text-slate-300">
                         {s.email}
                       </div>
                     </div>
+
+                    <div>
+                      <a
+                        href={`/admin/sell/${s.id}`}
+                        className="inline-flex items-center justify-center rounded-full border border-slate-600 bg-slate-900 px-3 py-1.5 text-[11px] font-medium text-slate-100 hover:border-slate-400"
+                      >
+                        Åbn detaljer →
+                      </a>
+                    </div>
                   </div>
                 </div>
-              </Link>
+              </article>
             );
           })}
         </div>
