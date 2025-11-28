@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getItemById } from "@/lib/items";
 import { getDropById } from "@/lib/drops";
+import { CheckoutTimer } from "./CheckoutTimer";
 
 type Props = { params: { id: string } };
 
@@ -30,7 +31,6 @@ export default async function CheckoutPage({ params }: Props) {
 
   const drop = item.dropId ? await getDropById(item.dropId) : null;
 
-  // Samme synlighedsregel som item-siden:
   if (!drop || !drop.isLive) {
     notFound();
   }
@@ -38,9 +38,9 @@ export default async function CheckoutPage({ params }: Props) {
   const priceLabel = `${item.price.toLocaleString("da-DK")} kr`;
   const marketLabel =
     item.marketMin && item.marketMax
-      ? `${item.marketMin.toLocaleString("da-DK")}–${item.marketMax.toLocaleString(
+      ? `${item.marketMin.toLocaleString(
           "da-DK"
-        )} kr`
+        )}–${item.marketMax.toLocaleString("da-DK")} kr`
       : null;
 
   return (
@@ -70,7 +70,7 @@ export default async function CheckoutPage({ params }: Props) {
           </div>
         </div>
 
-        {/* Timer-strip (visuelt – logik kan komme senere) */}
+        {/* Timer-strip */}
         <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/90 p-3">
           <div className="absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_0%_0%,rgba(255,92,222,0.22),transparent_55%),radial-gradient(circle_at_100%_100%,rgba(0,240,255,0.22),transparent_55%)]" />
           <div className="relative z-10 flex items-center justify-between gap-3 text-xs text-slate-100">
@@ -80,9 +80,7 @@ export default async function CheckoutPage({ params }: Props) {
             </div>
             <div className="flex items-center gap-2 text-[11px]">
               <span className="text-slate-300">Tid tilbage:</span>
-              <span className="rounded-full bg-black/60 px-3 py-1 font-mono text-emerald-300">
-                02:00
-              </span>
+              <CheckoutTimer />
             </div>
           </div>
         </div>
@@ -172,7 +170,7 @@ export default async function CheckoutPage({ params }: Props) {
             </div>
           </div>
 
-          {/* “Betal” CTA – dummy for nu */}
+          {/* “Betal” CTA – stadig demo */}
           <button
             type="button"
             className="w-full rounded-full bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] px-5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-950 dd-glow-cta"
