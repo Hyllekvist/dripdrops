@@ -1,6 +1,6 @@
 // app/drops/page.tsx
 import Link from "next/link";
-import { listActiveDrops } from "@/lib/drops";
+import { listActiveDrops, listPublicLiveDrops } from "@/lib/drops";
 
 export const metadata = {
   title: "Drops – DRIPDROPS",
@@ -9,10 +9,22 @@ export const metadata = {
 };
 
 export default async function DropsPage() {
-  const drops = await listActiveDrops();
+  // 🔒 Public-sikker data
+  const [allDrops, liveDrops] = await Promise.all([
+    listActiveDrops(),       // admin/intern view – bruges til at finde kommende
+    listPublicLiveDrops(),   // kun live drops, public-safe
+  ]);
 
-  const live = drops.filter((d) => d.isLive);
-  const upcoming = drops.filter((d) => !d.isLive);
+  const live = liveDrops;
+
+  const now = Date.now();
+  const upcoming = allDrops.filter((d) => {
+    if (d.isLive) return false;
+    if (!d.starts_at) return false;
+    return new Date(d.starts_at).getTime() > now;
+  });
+
+  const hasAny = live.length > 0 || upcoming.length > 0;
 
   return (
     <div className="mx-auto max-w-5xl px-4 pb-16 pt-6 space-y-8">
@@ -28,8 +40,8 @@ export default async function DropsPage() {
             DRIPDROPS-drops
           </h1>
           <p className="text-sm text-slate-400">
-            Kuraterede, tidsbegrænsede drops med design, møbler og fashion.
-            Én session ad gangen – ingen uendelig scroll.
+            Kuraterede, tidsbegrænsede drops med design, møbler og fashion. Én
+            session ad gangen – ingen uendelig scroll.
           </p>
         </div>
 
@@ -61,7 +73,7 @@ export default async function DropsPage() {
       {live.length > 0 && (
         <section className="space-y-3">
           <div className="flex items-center justify-between gap-2">
-            <h2 className="text-sm font-semibold text-slate-100 flex items-center gap-2">
+            <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-100">
               <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)]" />
               Live lige nu
             </h2>
@@ -170,11 +182,12 @@ export default async function DropsPage() {
       )}
 
       {/* EMPTY STATE */}
-      {drops.length === 0 && (
+      {!hasAny && (
         <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-6 text-sm text-slate-400">
           <p>
-            Der er ingen aktive drops endnu. Når de første er klar, lander de
-            her – med kuraterede 1/1 pieces klar til et kort, intenst drop.
+            Der er ingen aktive eller planlagte drops lige nu. Når de første er
+            klar, lander de her – med kuraterede 1/1 pieces klar til et kort,
+            intenst drop.
           </p>
         </div>
       )}
