@@ -11,6 +11,7 @@ import { ItemTrackingClient } from "./ItemTrackingClient";
 import { ItemCtaTracker } from "./ItemCtaTracker";
 import { ItemDesktopTopBarCta } from "./ItemDesktopTopBarCta";
 import { ReserveAndCheckoutButton } from "./ReserveAndCheckoutButton";
+import { ItemLiveStatusWatcher } from "./ItemLiveStatusWatcher";
 
 type Props = { params: { id: string } };
 
@@ -58,9 +59,9 @@ export default async function ItemPage({ params }: Props) {
   const priceLabel = `${item.price.toLocaleString("da-DK")} kr`;
   const marketLabel =
     item.marketMin && item.marketMax
-      ? `${item.marketMin.toLocaleString(
+      ? `${item.marketMin.toLocaleString("da-DK")}–${item.marketMax.toLocaleString(
           "da-DK"
-        )}–${item.marketMax.toLocaleString("da-DK")} kr`
+        )} kr`
       : null;
 
   let dropStatusLabel: string | null = null;
@@ -255,6 +256,9 @@ export default async function ItemPage({ params }: Props) {
                 )}
               </div>
 
+              {/* Live lock / status fra andre brugeres checkout */}
+              <ItemLiveStatusWatcher itemId={item.id} />
+
               <div className="flex items-end justify-between gap-4">
                 <div>
                   <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-slate-400">
@@ -371,7 +375,7 @@ export default async function ItemPage({ params }: Props) {
 
             {/* Drip Data */}
             <div className="space-y-3 rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
-              <div className="flex items=center justify-between gap-2">
+              <div className="flex items-center justify-between gap-2">
                 <p className="text-sm font-semibold text-slate-50">Drip Data</p>
                 <span className="rounded-full bg-slate-950 px-2.5 py-1 text-[11px] text-slate-300">
                   Markedsindsigt
