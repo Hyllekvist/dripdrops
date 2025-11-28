@@ -1,15 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { DropHeaderCountdown } from "@/components/DropHeaderCountdown";
-import { ItemCtaTracker } from "./ItemCtaTracker";
+import { useRouter } from "next/navigation";
+import { useItemLiveStatus } from "./useItemLiveStatus";
 
-type DropMode = "live" | "upcoming" | "expired";
+type Mode = "live" | "upcoming" | "expired";
 
 type Props = {
   anchorId: string;
-  mode: DropMode;
+  mode: Mode;
   priceTitle: string;
   priceLabel: string;
   marketLabel: string | null;
@@ -27,109 +26,115 @@ export function ItemDesktopTopBarCta({
   marketLabel,
   primaryCtaLabel,
   itemId,
-  dropId,
   startsAt,
 }: Props) {
-  const [show, setShow] = useState(false);
+  const router = useRouter();
+  const { status } = useItemLiveStatus(itemId);
+
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const anchor = document.getElementById(anchorId);
-    if (!anchor) return;
+    const el = document.getElementById(anchorId);
+    if (!el) return;
 
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        // Vis topbar når command center IKKE længere er synligt
-        setShow(!entry.isIntersecting);
+      (entries) => {
+        const entry = entries[0];
+        // Hvis command center IKKE er i view, viser vi topbaren
+        setVisible(!entry.isIntersecting);
       },
-      { threshold: 0.1 }
+      {
+        root: null,
+        threshold: 0,
+        rootMargin: "0px 0px -70% 0px",
+      }
     );
 
-    observer.observe(anchor);
+    observer.observe(el);
     return () => observer.disconnect();
   }, [anchorId]);
 
-  if (!show) return null;
+  if (!visible) return null;
 
-  const scrollToAnchor = () => {
-    const el = document.getElementById(anchorId);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
+  const isLive = mode === "live";
+
+  let isDisabled = false;
+  let effectiveLabel = primaryCtaLabel;
+
+  if (isLive) {
+    if (status === "reserved") {
+      effectiveLabel = "Reserveret i checkout";
+      isDisabled = true;
+    } else if (status === "sold") {
+      effectiveLabel = "Solgt";
+      isDisabled = true;
+    }
+  }
+
+  const handleClick = () => {
+    if (isDisabled) return;
+
+    if (mode === "live") {
+      router.push(`/checkout?itemId=${itemId}`);
+    } else if (mode === "upcoming") {
+      const el = document.getElementById(anchorId);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else if (mode === "expired") {
+      router.push("/drops");
     }
   };
 
+  const startsLabel =
+    mode === "upcoming" && startsAt
+      ? new Date(startsAt).toLocaleString("da-DK", {
+          weekday: "short",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : null;
+
   return (
-    <div className="fixed inset-x-0 top-16 z-40 hidden lg:block">
-      <div className="mx-auto max-w-5xl px-4">
-        <div className="flex items-center justify-between gap-4 rounded-full border border-slate-800/80 bg-slate-950/95 px-4 py-2 shadow-[0_12px_40px_rgba(15,23,42,0.7)] backdrop-blur-md">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="hidden text-xs text-slate-300 md:block">
-              <div className="text-[10px] uppercase tracking-[0.16em] text-slate-500">
-                {priceTitle}
-              </div>
-              <div className="text-sm font-semibold text-slate-50">
-                {priceLabel}
-              </div>
-              {marketLabel && (
-                <div className="text-[11px] text-emerald-400">
-                  Markedsværdi: {marketLabel}
-                </div>
-              )}
+    <div className="fixed inset-x-0 top-0 z-40 hidden border-b border-slate-800/70 bg-slate-950/95 backdrop-blur lg:block">
+      <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-2.5">
+        <div className="min-w-0">
+          <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-slate-400">
+            {priceTitle}
+          </p>
+          <p className="text-sm font-semibold text-slate-50">{priceLabel}</p>
+          {marketLabel && (
+            <p className="text-[11px] text-emerald-400">
+              Markedsværdi: {marketLabel}
+            </p>
+          )}
+        </div>
+
+        <div className="flex items-center gap-4">
+          {mode === "live" && (
+            <div className="flex items-center gap-1 text-[11px] text-emerald-400">
+              <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+              <span>Drop er live</span>
             </div>
+          )}
 
-            <div className="text-[11px] text-slate-300">
-              <DropHeaderCountdown mode={mode} startsAt={startsAt} />
+          {startsLabel && (
+            <div className="text-right text-[11px] text-slate-300">
+              Åbner: {startsLabel}
             </div>
-          </div>
+          )}
 
-          <div className="flex items-center gap-2">
-            {mode === "live" && (
-              <ItemCtaTracker
-                eventName="dd_item_cta_click"
-                label="topbar_buy_now_desktop"
-                itemId={itemId}
-                dropId={dropId}
-                mode={mode}
-              >
-                <button className="rounded-full bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-950">
-                  {primaryCtaLabel}
-                </button>
-              </ItemCtaTracker>
-            )}
-
-            {mode === "upcoming" && (
-              <ItemCtaTracker
-                eventName="dd_item_cta_click"
-                label="topbar_scroll_to_reminder_desktop"
-                itemId={itemId}
-                dropId={dropId}
-                mode={mode}
-              >
-                <button
-                  onClick={scrollToAnchor}
-                  className="rounded-full border border-slate-600 bg-slate-900 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-100"
-                >
-                  Sæt reminder
-                </button>
-              </ItemCtaTracker>
-            )}
-
-            {mode === "expired" && (
-              <ItemCtaTracker
-                eventName="dd_item_cta_click"
-                label="topbar_see_upcoming_drops_desktop"
-                itemId={itemId}
-                dropId={dropId}
-                mode={mode}
-              >
-                <Link
-                  href="/drops"
-                  className="rounded-full border border-slate-600 bg-slate-900 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-100"
-                >
-                  Se kommende drops
-                </Link>
-              </ItemCtaTracker>
-            )}
-          </div>
+          <button
+            type="button"
+            onClick={handleClick}
+            disabled={isDisabled}
+            className={`rounded-full px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] transition
+              ${
+                isDisabled
+                  ? "cursor-not-allowed border border-slate-700 bg-slate-800 text-slate-400"
+                  : "border border-fuchsia-400/70 bg-fuchsia-500 text-slate-950 hover:bg-fuchsia-400 hover:border-fuchsia-300"
+              }`}
+          >
+            {effectiveLabel}
+          </button>
         </div>
       </div>
     </div>
