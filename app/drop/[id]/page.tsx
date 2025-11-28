@@ -35,9 +35,7 @@ export default async function DropPage({ params }: Props) {
   const drop = await getDropById(params.id);
   if (!drop) notFound();
 
-  const items = await listItemsForDrop(drop.id);
-
-  // --- STATE: live / upcoming / ended (fallback) ---------------------------
+  // --- STATE: live / upcoming / ended ---------------------------
   type DropMode = "live" | "upcoming" | "ended";
 
   let mode: DropMode = "ended";
@@ -52,6 +50,9 @@ export default async function DropPage({ params }: Props) {
 
   const isLive = mode === "live";
   const isUpcoming = mode === "upcoming";
+
+  // Kun hent items, hvis droppet er live (items er kun public dér)
+  const items = isLive ? await listItemsForDrop(drop.id) : [];
 
   const statusLabel = isLive
     ? "Live lige nu"
@@ -111,7 +112,15 @@ export default async function DropPage({ params }: Props) {
                       : `Start: ${drop.startsAtLabel}`}
                   </p>
                 )}
-                <p>{items.length} item{items.length === 1 ? "" : "s"} i dette drop</p>
+                {isLive && (
+                  <p>
+                    {items.length} item{items.length === 1 ? "" : "s"} i dette
+                    drop
+                  </p>
+                )}
+                {!isLive && (
+                  <p>Items bliver kun synlige, mens droppet er live.</p>
+                )}
               </div>
 
               <div className="mt-3 h-px w-full bg-gradient-to-r from-slate-800 via-slate-600 to-slate-800" />
@@ -124,14 +133,14 @@ export default async function DropPage({ params }: Props) {
               )}
               {isUpcoming && (
                 <p className="mt-3 text-[11px] leading-relaxed text-slate-300">
-                  Dropper snart. Du kan allerede nu studere items og vælge dine
-                  favoritter, så du er klar, når timeren starter.
+                  Dropper snart. Items unlockes først, når droppet går live, så
+                  alle får samme startskud.
                 </p>
               )}
               {!isLive && !isUpcoming && (
                 <p className="mt-3 text-[11px] leading-relaxed text-slate-400">
-                  Dette drop er afsluttet. Brug det som inspiration til kommende
-                  drops – enkelte styles kan dukke op igen.
+                  Dette drop er afsluttet. Items var kun tilgængelige, mens
+                  droppet var live.
                 </p>
               )}
             </div>
@@ -139,83 +148,95 @@ export default async function DropPage({ params }: Props) {
         </div>
       </header>
 
-      {/* ITEMS GRID */}
-      {items.length > 0 ? (
-        <section className="space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="text-sm font-semibold text-slate-100">
-              Items i dette drop
-            </h2>
-            <span className="text-xs text-slate-400">
-              {items.length} item{items.length === 1 ? "" : "s"}
-            </span>
-          </div>
+      {/* ITEMS GRID – KUN NÅR DROP ER LIVE */}
+      {isLive ? (
+        items.length > 0 ? (
+          <section className="space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-sm font-semibold text-slate-100">
+                Items i dette drop
+              </h2>
+              <span className="text-xs text-slate-400">
+                {items.length} item{items.length === 1 ? "" : "s"}
+              </span>
+            </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            {items.map((item) => {
-              const marketLabel =
-                item.marketMin && item.marketMax
-                  ? `${item.marketMin.toLocaleString(
-                      "da-DK",
-                    )}–${item.marketMax.toLocaleString("da-DK")} kr`
-                  : null;
+            <div className="grid gap-4 sm:grid-cols-2">
+              {items.map((item) => {
+                const marketLabel =
+                  item.marketMin && item.marketMax
+                    ? `${item.marketMin.toLocaleString(
+                        "da-DK",
+                      )}–${item.marketMax.toLocaleString("da-DK")} kr`
+                    : null;
 
-              return (
-                <Link
-                  key={item.id}
-                  href={`/item/${item.id}`}
-                  className="group flex flex-col gap-3 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/85 p-4 transition hover:-translate-y-0.5 hover:border-slate-500 hover:bg-slate-900/90"
-                >
-                  {/* BILLEDE / VISUAL */}
-                  <div className="relative h-32 rounded-xl bg-[radial-gradient(circle_at_top,#1f2937,#020617_70%)]">
-                    <div className="absolute inset-0 opacity-40 group-hover:opacity-60 bg-[radial-gradient(circle_at_20%_0%,rgba(255,92,222,0.25),transparent_60%),radial-gradient(circle_at_80%_100%,rgba(0,240,255,0.25),transparent_55%)] transition-opacity" />
-                    <div className="relative z-10 flex h-full w-full items-center justify-center">
-                      <span className="rounded-full bg-black/55 px-3 py-1 text-[11px] text-slate-100 backdrop-blur-sm">
-                        {isLive
-                          ? "Live i droppet"
-                          : isUpcoming
-                          ? "Preview – droppet åbner snart"
-                          : "Tidligere drop-piece"}
+                return (
+                  <Link
+                    key={item.id}
+                    href={`/item/${item.id}`}
+                    className="group flex flex-col gap-3 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/85 p-4 transition hover:-translate-y-0.5 hover:border-slate-500 hover:bg-slate-900/90"
+                  >
+                    {/* BILLEDE / VISUAL */}
+                    <div className="relative h-32 rounded-xl bg-[radial-gradient(circle_at_top,#1f2937,#020617_70%)]">
+                      <div className="absolute inset-0 opacity-40 group-hover:opacity-60 bg-[radial-gradient(circle_at_20%_0%,rgba(255,92,222,0.25),transparent_60%),radial-gradient(circle_at_80%_100%,rgba(0,240,255,0.25),transparent_55%)] transition-opacity" />
+                      <div className="relative z-10 flex h-full w-full items-center justify-center">
+                        <span className="rounded-full bg-black/55 px-3 py-1 text-[11px] text-slate-100 backdrop-blur-sm">
+                          Live i droppet
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* TEKST + META */}
+                    <div className="space-y-1">
+                      <div className="line-clamp-1 text-sm font-semibold text-slate-50">
+                        {item.title}
+                      </div>
+                      <p className="line-clamp-1 text-xs text-slate-400">
+                        {[item.designer, item.brand].filter(Boolean).join(" · ")}
+                      </p>
+                    </div>
+
+                    <div className="mt-1 flex items-center justify-between text-xs text-slate-400">
+                      <div>
+                        <div className="text-slate-100">
+                          {item.price.toLocaleString("da-DK")} kr
+                        </div>
+                        {marketLabel && (
+                          <div className="text-[11px] text-emerald-300">
+                            Markedsværdi: {marketLabel}
+                          </div>
+                        )}
+                      </div>
+                      <span className="text-slate-300 group-hover:text-slate-100">
+                        Se varen →
                       </span>
                     </div>
-                  </div>
-
-                  {/* TEKST + META */}
-                  <div className="space-y-1">
-                    <div className="line-clamp-1 text-sm font-semibold text-slate-50">
-                      {item.title}
-                    </div>
-                    <p className="line-clamp-1 text-xs text-slate-400">
-                      {[item.designer, item.brand].filter(Boolean).join(" · ")}
-                    </p>
-                  </div>
-
-                  <div className="mt-1 flex items-center justify-between text-xs text-slate-400">
-                    <div>
-                      <div className="text-slate-100">
-                        {item.price.toLocaleString("da-DK")} kr
-                      </div>
-                      {marketLabel && (
-                        <div className="text-[11px] text-emerald-300">
-                          Markedsværdi: {marketLabel}
-                        </div>
-                      )}
-                    </div>
-                    <span className="text-slate-300 group-hover:text-slate-100">
-                      Se varen →
-                    </span>
-                  </div>
-                </Link>
-              );
-            })}
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        ) : (
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-6 text-sm text-slate-400">
+            <p>
+              Der er endnu ikke tilføjet items til dette drop. Når sælgerne har
+              lagt deres pieces ind, dukker de op her.
+            </p>
           </div>
-        </section>
+        )
       ) : (
         <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-6 text-sm text-slate-400">
-          <p>
-            Der er endnu ikke tilføjet items til dette drop. Når sælgerne har
-            lagt deres pieces ind, dukker de op her.
-          </p>
+          {isUpcoming ? (
+            <p>
+              Items unlockes først, når droppet går live. Følg med – når timeren
+              starter, åbner vi hele drop-listen.
+            </p>
+          ) : (
+            <p>
+              Dette drop er lukket. Items var kun synlige og til salg, mens
+              droppet var live.
+            </p>
+          )}
         </div>
       )}
     </div>
