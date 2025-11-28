@@ -294,7 +294,39 @@ export default async function ItemPage({ params }: Props) {
                     dropId={drop?.id ?? null}
                     mode={mode}
                   >
-                    <button className="w-full rounded-full bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-950">
+                    <button
+                      className="w-full rounded-full bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-950"
+                      onClick={async () => {
+                        try {
+                          const res = await fetch("/api/reservations", {
+                            method: "POST",
+                            headers: {
+                              "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({ itemId: item.id }),
+                          });
+
+                          const data = await res.json().catch(() => null);
+
+                          if (!res.ok || !data?.ok) {
+                            alert(
+                              data?.error ||
+                                "Kunne ikke reservere varen lige nu."
+                            );
+                            return;
+                          }
+
+                          // Midlertidig UX: bare en alert.
+                          // Senere: redirect til checkout-side med timer.
+                          alert(
+                            "Varen er nu reserveret til dig i 2 minutter. Checkout-flow kommer her."
+                          );
+                        } catch (e) {
+                          console.error(e);
+                          alert("Teknisk fejl – prøv igen om lidt.");
+                        }
+                      }}
+                    >
                       {primaryCtaLabel}
                     </button>
                   </ItemCtaTracker>
@@ -486,7 +518,7 @@ export default async function ItemPage({ params }: Props) {
         startsAt={drop?.starts_at ?? null}
       />
 
-      {/* Mobil sticky CTA */}
+      {/* Mobil sticky CTA – endnu ikke koblet på reservations-API'et */}
       <ItemCtaTracker
         eventName="dd_item_cta_click"
         label="sticky_cta_mobile"
