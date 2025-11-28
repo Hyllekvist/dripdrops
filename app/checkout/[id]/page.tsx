@@ -5,9 +5,16 @@ import { getItemById } from "@/lib/items";
 import { getDropById } from "@/lib/drops";
 import { CheckoutTimer } from "./CheckoutTimer";
 
-type Props = { params: { id: string } };
+type PageProps = {
+  params: { id: string };
+  searchParams: { expires?: string };
+};
 
-export async function generateMetadata({ params }: Props) {
+export async function generateMetadata({
+  params,
+}: {
+  params: { id: string };
+}) {
   const item = await getItemById(params.id);
   if (!item) return {};
 
@@ -25,12 +32,13 @@ export async function generateMetadata({ params }: Props) {
   };
 }
 
-export default async function CheckoutPage({ params }: Props) {
+export default async function CheckoutPage({ params, searchParams }: PageProps) {
   const item = await getItemById(params.id);
   if (!item) notFound();
 
   const drop = item.dropId ? await getDropById(item.dropId) : null;
 
+  // Samme synlighedsregel som item-siden:
   if (!drop || !drop.isLive) {
     notFound();
   }
@@ -42,6 +50,8 @@ export default async function CheckoutPage({ params }: Props) {
           "da-DK"
         )}–${item.marketMax.toLocaleString("da-DK")} kr`
       : null;
+
+  const expires = (searchParams.expires as string | undefined) ?? null;
 
   return (
     <div className="mx-auto max-w-4xl px-4 pb-16 pt-8 space-y-6">
@@ -70,20 +80,8 @@ export default async function CheckoutPage({ params }: Props) {
           </div>
         </div>
 
-        {/* Timer-strip */}
-        <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/90 p-3">
-          <div className="absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_0%_0%,rgba(255,92,222,0.22),transparent_55%),radial-gradient(circle_at_100%_100%,rgba(0,240,255,0.22),transparent_55%)]" />
-          <div className="relative z-10 flex items-center justify-between gap-3 text-xs text-slate-100">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
-              <span>Din session er aktiv</span>
-            </div>
-            <div className="flex items-center gap-2 text-[11px]">
-              <span className="text-slate-300">Tid tilbage:</span>
-              <CheckoutTimer />
-            </div>
-          </div>
-        </div>
+        {/* Live nedtælling baseret på reserved_until */}
+        <CheckoutTimer expires={expires} />
       </header>
 
       {/* MAIN GRID */}
@@ -170,7 +168,7 @@ export default async function CheckoutPage({ params }: Props) {
             </div>
           </div>
 
-          {/* “Betal” CTA – stadig demo */}
+          {/* “Betal” CTA – dummy for nu */}
           <button
             type="button"
             className="w-full rounded-full bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] px-5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-950 dd-glow-cta"
