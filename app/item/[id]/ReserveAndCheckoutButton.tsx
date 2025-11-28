@@ -1,8 +1,7 @@
-// components/ReserveAndCheckoutButton.tsx
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useItemLiveStatus } from "./useItemLiveStatus";
 
 type Props = {
   itemId: string;
@@ -11,48 +10,34 @@ type Props = {
 
 export function ReserveAndCheckoutButton({ itemId, label }: Props) {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const { status } = useItemLiveStatus(itemId);
 
-  async function handleClick() {
-    if (loading) return;
-    setLoading(true);
+  const isDisabled = status === "reserved" || status === "sold";
 
-    try {
-      const res = await fetch("/api/reservations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ itemId }),
-      });
+  let effectiveLabel = label;
+  if (status === "reserved") effectiveLabel = "Reserveret i checkout";
+  if (status === "sold") effectiveLabel = "Solgt";
 
-      const data = await res.json().catch(() => null);
+  const handleClick = () => {
+    if (isDisabled) return;
 
-      if (!res.ok || !data?.ok) {
-        alert(
-          data?.error ||
-            "Kunne ikke reservere varen lige nu. Prøv igen om lidt."
-        );
-        return;
-      }
-
-      // send reserved_until med som query-param
-      const expires = encodeURIComponent(data.reserved_until);
-      router.push(`/checkout/${itemId}?expires=${expires}`);
-    } catch (err) {
-      console.error("ReserveAndCheckoutButton error:", err);
-      alert("Teknisk fejl – prøv igen om lidt.");
-    } finally {
-      setLoading(false);
-    }
-  }
+    // TODO: senere kan vi kalde et reserve-endpoint her.
+    router.push(`/checkout?itemId=${itemId}`);
+  };
 
   return (
     <button
       type="button"
       onClick={handleClick}
-      disabled={loading}
-      className="w-full rounded-full bg-gradient-to-r from-[var(--dd-neon-pink)] via-[var(--dd-neon-orange)] to-[var(--dd-neon-cyan)] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-950 disabled:opacity-70"
+      disabled={isDisabled}
+      className={`inline-flex w-full items-center justify-center rounded-full px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] transition
+        ${
+          isDisabled
+            ? "cursor-not-allowed border border-slate-700 bg-slate-800 text-slate-400"
+            : "border border-fuchsia-400/70 bg-fuchsia-500 text-slate-950 hover:bg-fuchsia-400 hover:border-fuchsia-300"
+        }`}
     >
-      {loading ? "Reserverer…" : label}
+      {effectiveLabel}
     </button>
   );
 }
