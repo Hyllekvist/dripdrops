@@ -1,3 +1,4 @@
+// app/api/admin/sell/create-item/route.ts
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
@@ -21,12 +22,20 @@ export async function POST(req: Request) {
     const { data: submission, error: subErr } = await supabase
       .from("sell_submissions")
       .select(
-        "id, title, brand, price_idea, status, item_id"
+        `
+        id,
+        title,
+        brand,
+        price_idea,
+        status,
+        item_id
+      `
       )
       .eq("id", id)
       .single();
 
     if (subErr || !submission) {
+      console.error("Create-item: submission fetch error", subErr);
       return NextResponse.json(
         { error: "Submission ikke fundet" },
         { status: 404 }
@@ -35,7 +44,10 @@ export async function POST(req: Request) {
 
     if (submission.status !== "approved") {
       return NextResponse.json(
-        { error: "Submission skal være approved før der oprettes item" },
+        {
+          error:
+            "Submission skal være approved før der oprettes item",
+        },
         { status: 400 }
       );
     }
@@ -48,15 +60,26 @@ export async function POST(req: Request) {
       );
     }
 
+    // Fallback på pris hvis price_idea mangler (afhængigt af items.price NOT NULL)
+    const price =
+      typeof submission.price_idea === "number"
+        ? submission.price_idea
+        : 0;
+
     // 2) Opret et basic item i items-tabellen
-    // JUSTER disse felter så de passer 1:1 til din items-schema
+    // Felter matcher dit ItemRow-schema i lib/items.ts
     const { data: item, error: itemErr } = await supabase
       .from("items")
       .insert({
+        drop_id: null,             // kobles til drop senere i admin
         title: submission.title,
         brand: submission.brand,
-        price: submission.price_idea,
-        // resten (description, aiAuthenticity osv.) kan udfyldes manuelt senere
+        designer: null,
+        price,                     // bruger price_idea eller 0
+        market_min: null,
+        market_max: null,
+        ai_authenticity: 0,
+        description: null,         // kan udfyldes senere i admin
       })
       .select("id")
       .single();
@@ -76,9 +99,15 @@ export async function POST(req: Request) {
       .eq("id", id);
 
     if (updateErr) {
-      console.error("Update submission with item_id error:", updateErr);
+      console.error(
+        "Update submission with item_id error:",
+        updateErr
+      );
       return NextResponse.json(
-        { error: "Item oprettet, men kunne ikke linke til submission" },
+        {
+          error:
+            "Item oprettet, men kunne ikke linke til submission",
+        },
         { status: 500 }
       );
     }
